@@ -1,4 +1,4 @@
-function OnLoad ()
+function OnLoadBody ()
 {
-    alert ("Script is successfully loaded");
+    
 }
