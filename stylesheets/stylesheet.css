@@ -12,36 +12,37 @@ nav
     overflow: hidden;
 }
 
-nav>h1
+nav h1
 {
     color: white;
+    font-size: 1.5em;
     font-weight: normal;
     float: left;
     margin: 0px;
-    padding: 10px 0px 10px 20px;
+    padding: 10px 20px 10px 20px;
 }
 
-nav>ul
+nav ul
 {
     list-style: none;
-    position: absolute;
-    right: 0%;
+    float: right;
     margin: 0px;
-    padding: 15px 0px 15px 0px;
+    padding: 10px 0px 10px 20px;
+    text-align: center;
 }
 
 nav li
 {
     display: inline-block;
-    padding-right: 20px;
-    overflow: hidden;
+    margin: 0px;
+    padding: 0px 20px 0px 0px;
 }
 
 nav a
 {
     color: white;
     font-size: 1.5em;
-    font-weight: lighter;
+    font-weight: normal;
     text-align: center;
     text-decoration: none;
 }
@@ -70,7 +71,7 @@ article>p
     font-size: 2em;
     text-align: center;
     margin: 0px;
-    padding: 20px 100px 20px 100px;
+    padding: 0px 100px 20px 100px;
 }
 
 footer
@@ -89,17 +90,29 @@ footer>p
     padding: 0px;
 }
 
-div.background-caption
+div.image-container
+{
+    position: relative;
+}
+
+div.image-container img
+{
+    opacity: 0.8;
+    width: 100%;
+    height: auto;
+}
+
+div.image-caption
 {
     position: absolute;
     left: 50%;
     top: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     margin: 0px;
     padding: 0px;
 }
 
-div.background-caption>h1
+div.image-caption h1
 {
     text-align: center;
     font-size: 4em;
@@ -108,8 +121,24 @@ div.background-caption>h1
     padding: 0px;
 }
 
-img
+@media (max-width: 850px)
 {
-    width: 100%;
-    height: auto;
+    article>h1
+    {
+        font-size: 2em;
+        margin: 0px;
+        padding: 10px;
+    }
+    
+    article>p
+    {
+        font-size: 1.2em;
+        margin: 0px;
+        padding: 0px 20px 10px 20px;
+    }
+
+    div.image-caption h1
+    {
+        font-size: 2em;
+    }
 }
