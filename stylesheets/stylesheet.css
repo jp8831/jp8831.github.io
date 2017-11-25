@@ -7,43 +7,40 @@ body
 
 nav
 {
-    background: black;
+    background-color: black;
     display: block;
     overflow: hidden;
+    text-align: center;
 }
 
 nav h1
 {
     color: white;
-    font-size: 1.5em;
+    font-size: 1.5rem;
     font-weight: normal;
-    float: left;
     margin: 0px;
-    padding: 10px 20px 10px 20px;
+    padding: 10px;
 }
 
 nav ul
 {
     list-style: none;
-    float: right;
     margin: 0px;
-    padding: 10px 0px 10px 20px;
-    text-align: center;
+    padding: 10px;
 }
 
 nav li
 {
-    display: inline-block;
+    display: block;
     margin: 0px;
-    padding: 0px 20px 0px 0px;
+    padding: 0px;
 }
 
 nav a
 {
     color: white;
-    font-size: 1.5em;
+    font-size: 1.5rem;
     font-weight: normal;
-    text-align: center;
     text-decoration: none;
 }
 
@@ -56,36 +53,35 @@ header
 article
 {
     display: block;
+    text-align: center;
 }
 
-article>h1
+article h1
 {
-    font-size: 3em;
-    text-align: center;
+    font-size: 2rem;
     margin: 0px;
-    padding: 20px;
+    padding: 10px;
 }
 
-article>p
+article p
 {
-    font-size: 2em;
-    text-align: center;
+    font-size: 1.5rem;
     margin: 0px;
-    padding: 0px 100px 20px 100px;
+    padding: 0px 20px 10px 20px;
 }
 
 footer
 {
     display: block;
-    background: black;
+    background-color: black;
     color: white;
     text-align: center;
-    padding: 20px 0px 20px 0px;
+    padding: 20px 10px 20px 10px;
 }
 
-footer>p
+footer p
 {
-    font-size: 1.5em;
+    font-size: 1.5rem;
     margin: 0px;
     padding: 0px;
 }
@@ -115,30 +111,132 @@ div.image-caption
 div.image-caption h1
 {
     text-align: center;
-    font-size: 4em;
+    font-size: 2rem;
     white-space: nowrap;
     margin: 0px;
     padding: 0px;
 }
 
-@media (max-width: 850px)
+/* Change style when screen width is between 0px and 350px */
+@media (max-width: 350px)
 {
-    article>h1
+    nav h1
     {
-        font-size: 2em;
-        margin: 0px;
-        padding: 10px;
+        font-size: 1.2rem;
     }
-    
-    article>p
+
+    nav a
     {
-        font-size: 1.2em;
-        margin: 0px;
-        padding: 0px 20px 10px 20px;
+        font-size: 1.2rem;
+    }
+
+    article h1
+    {
+        font-size: 1.8rem;
+    }
+
+    article p
+    {
+        font-size: 1.2rem;
+    }
+
+    footer p
+    {
+        font-size: 1.2rem;
     }
 
     div.image-caption h1
     {
-        font-size: 2em;
+        font-size: 1.8rem;
+    }
+}
+
+/* Change style for large devices */
+@media (min-width: 700px)
+{
+    nav h1
+    {
+        font-size: 1.8rem;
+        float: left;
+        padding: 20px;
+    }
+    
+    nav ul
+    {
+        float: right;
+        padding: 20px;
+    }
+    
+    nav li
+    {
+        display: inline-block;
+        padding-right: 20px;
+    }
+
+    nav li:last-child
+    {
+        padding-right: 0px;
+    }
+    
+    nav a
+    {
+        font-size: 1.8rem;
+    }
+    
+    article h1
+    {
+        font-size: 3rem;
+        padding: 20px;
+    }
+    
+    article p
+    {
+        font-size: 2rem;
+        padding: 0px 100px 20px 100px;
+    }
+    
+    footer
+    {
+        padding: 30px 100px 30px 100px;
+    }
+    
+    footer p
+    {
+        font-size: 2rem;
+    }
+
+    div.image-caption h1
+    {
+        font-size: 7rem;
+    }
+}
+
+/* Change style when screen width is between 700px and 1000px */
+@media (min-width: 700px) and (max-width: 1000px)
+{
+    nav h1
+    {
+        font-size: 1.5rem;
+        padding: 10px;
+    }
+    
+    nav ul
+    {
+        padding: 10px;
+    }
+    
+    nav li
+    {
+        padding-right: 10px;
+    }
+
+    nav a
+    {
+        font-size: 1.5rem;
+    }
+
+    div.image-caption h1
+    {
+        font-size: 4rem;
     }
 }
