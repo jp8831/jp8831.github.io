@@ -65,7 +65,7 @@ article h1
 
 article p
 {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     margin: 0px;
     padding: 0px 20px 10px 20px;
 }
@@ -165,7 +165,7 @@ div.image-caption h1
 
     article p
     {
-        font-size: 1.2rem;
+        font-size: 1rem;
     }
 
     footer p
