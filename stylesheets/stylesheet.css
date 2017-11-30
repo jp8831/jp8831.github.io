@@ -44,6 +44,11 @@ nav a
     text-decoration: none;
 }
 
+nav a:hover
+{
+    color: #D3D3D3;
+}
+
 header
 {
     font-family: Impact, Charcoal, sans-serif;
