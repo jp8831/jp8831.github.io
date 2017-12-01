@@ -13,15 +13,6 @@ nav
     text-align: center;
 }
 
-nav h1
-{
-    color: white;
-    font-size: 1.5rem;
-    font-weight: normal;
-    margin: 0px;
-    padding: 10px;
-}
-
 nav ul
 {
     list-style: none;
@@ -42,6 +33,8 @@ nav a
     font-size: 1.5rem;
     font-weight: normal;
     text-decoration: none;
+    margin: 0px;
+    padding: 0px;
 }
 
 nav a:hover
@@ -49,49 +42,23 @@ nav a:hover
     color: #D3D3D3;
 }
 
-header
+nav div#logo
 {
-    font-family: Impact, Charcoal, sans-serif;
-    display: block;
-}
-
-article
-{
-    display: block;
-    text-align: center;
-}
-
-article h1
-{
-    font-size: 2rem;
     margin: 0px;
     padding: 10px;
 }
 
-article p
+nav #navigation-menu
 {
-    font-size: 1.2rem;
-    margin: 0px;
-    padding: 0px 20px 10px 20px;
+    display: none;
 }
 
-footer
+nav #navigation-menu.show
 {
     display: block;
-    background-color: black;
-    color: white;
-    text-align: center;
-    padding: 20px 10px 20px 10px;
 }
 
-footer p
-{
-    font-size: 1.5rem;
-    margin: 0px;
-    padding: 0px;
-}
-
-#menu-icon
+nav #navigation-menu-icon
 {
     position: absolute;
     width: 7vw;
@@ -100,23 +67,68 @@ footer p
     top: 2.5vw;
 }
 
-#menu
+nav #navigation-menu-icon>div
 {
-    display: none;
-}
-
-#menu.show
-{
-    display: block;
-}
-
-#menu-icon>div
-{
-    position: relative;
     width: 100%;
     height: 20%;
     background-color: white;
-    margin: 10% 0px 10% 0px;
+    margin: 10% 0px;
+}
+
+nav #navigation-menu-icon.close>div
+{
+    position: absolute;
+}
+
+header
+{
+    font-family: Impact, Charcoal, sans-serif;
+    display: block;
+    margin: 0px;
+    padding: 0px;
+}
+
+article
+{
+    display: block;
+    text-align: center;
+    margin: 0px;
+    padding: 3vw;
+}
+
+article h1
+{
+    font-size: 2rem;
+    margin: 0px;
+    padding-bottom: 3vw;
+}
+
+article p
+{
+    font-size: 1.2rem;
+    margin: 0px;
+    padding-bottom: 2vw;
+}
+
+article :last-child
+{
+    padding-bottom: 0px;
+}
+
+footer
+{
+    display: block;    
+    background-color: black;
+    color: white;
+    text-align: center;
+    padding: 2vw 3vw;
+}
+
+footer p
+{
+    font-size: 1.5rem;
+    margin: 0px;
+    padding: 0px;
 }
 
 div.image-container
@@ -153,11 +165,6 @@ div.image-caption h1
 /* Change style when screen width is between 0px and 350px */
 @media (max-width: 350px)
 {
-    nav h1
-    {
-        font-size: 1.2rem;
-    }
-
     nav a
     {
         font-size: 1.2rem;
@@ -186,14 +193,7 @@ div.image-caption h1
 
 /* Change style for large devices */
 @media (min-width: 700px)
-{
-    nav h1
-    {
-        font-size: 1.8rem;
-        float: left;
-        padding: 20px;
-    }
-    
+{   
     nav ul
     {
         float: right;
@@ -215,37 +215,49 @@ div.image-caption h1
     {
         font-size: 1.8rem;
     }
+
+    nav div#logo
+    {
+        font-size: 1.8rem;
+        float: left;
+        padding: 20px;
+    }
+
+    nav #navigation-menu
+    {
+        display: block;
+    }
+
+    nav #navigation-menu-icon
+    {
+        display: none;
+    }
+
+    article
+    {
+        padding: 1.5vw;
+    }
     
     article h1
     {
         font-size: 3rem;
-        padding: 20px;
+        padding-bottom: 1.5vw;
     }
     
     article p
     {
         font-size: 2rem;
-        padding: 0px 100px 20px 100px;
+        padding-bottom: 1vw;
     }
-    
+
     footer
     {
-        padding: 30px 100px 30px 100px;
+        padding: 1vw 1.5vw 1vw 1.5vw;
     }
     
     footer p
     {
         font-size: 2rem;
-    }
-
-    #menu
-    {
-        display: block;
-    }
-
-    #menu-icon
-    {
-        display: none;
     }
 
     div.image-caption h1
@@ -256,13 +268,7 @@ div.image-caption h1
 
 /* Change style when screen width is between 700px and 1000px */
 @media (min-width: 700px) and (max-width: 1000px)
-{
-    nav h1
-    {
-        font-size: 1.5rem;
-        padding: 10px;
-    }
-    
+{   
     nav ul
     {
         padding: 10px;
@@ -276,6 +282,11 @@ div.image-caption h1
     nav a
     {
         font-size: 1.5rem;
+    }
+
+    nav div#logo
+    {
+        padding: 10px;
     }
 
     div.image-caption h1

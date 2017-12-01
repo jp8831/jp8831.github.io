@@ -3,7 +3,7 @@ function OnLoadBody ()
     
 }
 
-function OnClickMenuIcon ()
+function OnClickNavigationMenuIcon ()
 {
-    document.getElementById ("menu").classList.toggle ("show");
+    document.getElementById ("navigation-menu").classList.toggle ("show");
 }
