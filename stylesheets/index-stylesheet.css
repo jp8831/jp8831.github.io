@@ -224,7 +224,7 @@ div.image-caption h1
 
     article
     {
-        padding: 1.5vw;
+        padding: 5vw 15vw;
     }
     
     article h1
@@ -241,7 +241,7 @@ div.image-caption h1
 
     footer
     {
-        padding: 1vw 1.5vw 1vw 1.5vw;
+        padding: 2vw 15vw;
     }
     
     footer p
