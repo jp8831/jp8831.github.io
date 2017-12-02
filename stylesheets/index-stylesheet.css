@@ -93,7 +93,7 @@ article h1
 {
     font-size: 2rem;
     margin: 0px;
-    padding-bottom: 2rem;
+    padding-bottom: 1.2rem;
 }
 
 article p
@@ -168,13 +168,13 @@ div.image-caption h1
     article h1
     {
         font-size: 1.8rem;
-        padding-bottom: 1.8rem;
+        padding-bottom: 1rem;
     }
 
     article p
     {
         font-size: 1rem;
-        padding-bottom: 1.8rem;
+        padding-bottom: 1rem;
     }
 
     footer p
@@ -226,13 +226,13 @@ div.image-caption h1
 
     article
     {
-        padding: 5vw 15vw;
+        padding: 2vw 15vw;
     }
     
     article h1
     {
         font-size: 3rem;
-        padding-bottom: 3rem;
+        padding-bottom: 2rem;
     }
     
     article p
