@@ -4,3 +4,279 @@ body
     margin: 0px;
     padding: 0px;
 }
+
+nav
+{
+    background-color: #1a1a1d;
+    display: block;
+    overflow: hidden;
+    text-align: center;
+}
+
+nav ul
+{
+    list-style: none;
+    margin: 0px;
+    padding: 0px;
+}
+
+nav li
+{
+    display: block;
+    margin: 0px;
+    padding: 1.25vw;
+}
+
+nav a
+{
+    color: white;
+    font-size: 1.5rem;
+    font-weight: normal;
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+}
+
+nav a:hover
+{
+    color: #d3d3d3;
+}
+
+nav div#logo
+{
+    margin: 0px;
+    padding: 2.5vw;
+}
+
+nav #navigation-menu
+{
+    display: none;
+}
+
+nav #navigation-menu.show
+{
+    display: block;
+}
+
+nav #navigation-menu-icon
+{
+    position: absolute;
+    width: 7vw;
+    height: 7vw;
+    top: 3vw;
+    right: 3vw;
+}
+
+nav #navigation-menu-icon>div
+{
+    width: 100%;
+    height: 20%;
+    background-color: white;
+    margin: 10% 0;
+}
+
+header
+{
+    color: white;
+    display: block;
+}
+
+header div.image-container
+{
+    background-color: #1a1a1d;
+    position: relative;
+    width: 100%;
+    height: 50vw;
+}
+
+header div.image-container img
+{
+    object-fit: cover;
+    opacity: 0.3;
+    width: 100%;
+    height: 100%;
+}
+
+header div.image-caption
+{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+header div.image-caption h1
+{
+    text-align: center;
+    font-size: 2rem;
+    white-space: nowrap;
+    margin: 0px;
+    padding: 0px;
+}
+
+article
+{
+    color: #1a1a1d;
+    display: block;
+    text-align: center;
+    margin: 0px;
+    padding: 3vw;
+}
+
+article h1
+{
+    font-size: 2rem;
+    margin: 0px;
+    padding-bottom: 1.2rem;
+}
+
+article p
+{
+    font-size: 1.2rem;
+    margin: 0px;
+    padding-bottom: 1.2rem;
+}
+
+article :last-child
+{
+    padding-bottom: 0px;
+}
+
+footer
+{
+    display: block;    
+    background-color: #1a1a1d;
+    color: white;
+    text-align: center;
+    padding: 3vw;
+}
+
+footer p
+{
+    font-size: 1.5rem;
+    margin: 0px;
+    padding: 0px;
+}
+
+/* Change style when screen width is between 0px and 350px */
+@media (max-width: 350px)
+{
+    nav a
+    {
+        font-size: 1.2rem;
+    }
+
+    header div.image-caption h1
+    {
+        font-size: 1.8rem;
+    }
+
+    article h1
+    {
+        font-size: 1.8rem;
+        padding-bottom: 1rem;
+    }
+
+    article p
+    {
+        font-size: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    footer p
+    {
+        font-size: 1.2rem;
+    }    
+}
+
+/* Change style for large devices */
+@media (min-width: 600px)
+{   
+    nav ul
+    {
+        float: right;
+    }
+    
+    nav li
+    {
+        display: inline-block;
+        padding: 1vw;
+    }
+    
+    nav a
+    {
+        font-size: 1.8rem;
+    }
+
+    nav div#logo
+    {
+        font-size: 1.8rem;
+        float: left;
+        padding: 1vw;
+    }
+
+    nav #navigation-menu
+    {
+        display: block;
+    }
+
+    nav #navigation-menu-icon
+    {
+        display: none;
+    }
+
+    header div.image-caption h1
+    {
+        font-size: 6rem;
+    }
+
+    article
+    {
+        padding: 2vw 15vw;
+    }
+    
+    article h1
+    {
+        font-size: 3rem;
+        padding-bottom: 2rem;
+    }
+    
+    article p
+    {
+        font-size: 2rem;
+        padding-bottom: 2rem;
+    }
+
+    footer
+    {
+        padding: 2vw 15vw;
+    }
+    
+    footer p
+    {
+        font-size: 2rem;
+    }
+}
+
+/* Change style when screen width is between 600px and 1000px */
+@media (min-width: 600px) and (max-width: 1000px)
+{   
+    nav a
+    {
+        font-size: 1.5rem;
+    }
+
+    header div.image-caption h1
+    {
+        font-size: 3rem;
+    }
+
+    article
+    {
+        padding: 5vw;
+    }
+
+    footer
+    {
+        padding: 5vw;
+    }
+}

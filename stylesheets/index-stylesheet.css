@@ -38,7 +38,7 @@ nav a
 
 nav a:hover
 {
-    color: #D3D3D3;
+    color: #d3d3d3;
 }
 
 nav div#logo
@@ -78,6 +78,39 @@ header
 {
     color: white;
     display: block;
+}
+
+header div.image-container
+{
+    background-color: #1a1a1d;
+    position: relative;
+    width: 100%;
+    height: 50vw;
+}
+
+header div.image-container img
+{
+    object-fit: cover;
+    opacity: 0.3;
+    width: 100%;
+    height: 100%;
+}
+
+header div.image-caption
+{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+header div.image-caption h1
+{
+    text-align: center;
+    font-size: 2rem;
+    white-space: nowrap;
+    margin: 0px;
+    padding: 0px;
 }
 
 article
@@ -124,45 +157,17 @@ footer p
     padding: 0px;
 }
 
-div.image-container
-{
-    background-color: #1a1a1d;
-    position: relative;
-    width: 100%;
-    height: 50vw;
-}
-
-div.image-container img
-{
-    object-fit: cover;
-    opacity: 0.3;
-    width: 100%;
-    height: 100%;
-}
-
-div.image-caption
-{
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-}
-
-div.image-caption h1
-{
-    text-align: center;
-    font-size: 2rem;
-    white-space: nowrap;
-    margin: 0px;
-    padding: 0px;
-}
-
 /* Change style when screen width is between 0px and 350px */
 @media (max-width: 350px)
 {
     nav a
     {
         font-size: 1.2rem;
+    }
+
+    header div.image-caption h1
+    {
+        font-size: 1.8rem;
     }
 
     article h1
@@ -180,12 +185,7 @@ div.image-caption h1
     footer p
     {
         font-size: 1.2rem;
-    }
-
-    div.image-caption h1
-    {
-        font-size: 1.8rem;
-    }
+    }    
 }
 
 /* Change style for large devices */
@@ -224,6 +224,11 @@ div.image-caption h1
         display: none;
     }
 
+    header div.image-caption h1
+    {
+        font-size: 6rem;
+    }
+
     article
     {
         padding: 2vw 15vw;
@@ -250,11 +255,6 @@ div.image-caption h1
     {
         font-size: 2rem;
     }
-
-    div.image-caption h1
-    {
-        font-size: 6rem;
-    }
 }
 
 /* Change style when screen width is between 600px and 1000px */
@@ -265,6 +265,11 @@ div.image-caption h1
         font-size: 1.5rem;
     }
 
+    header div.image-caption h1
+    {
+        font-size: 3rem;
+    }
+
     article
     {
         padding: 5vw;
@@ -273,10 +278,5 @@ div.image-caption h1
     footer
     {
         padding: 5vw;
-    }
-
-    div.image-caption h1
-    {
-        font-size: 3rem;
     }
 }
