@@ -17,14 +17,14 @@ nav ul
 {
     list-style: none;
     margin: 0px;
-    padding: 10px;
+    padding: 0px;
 }
 
 nav li
 {
     display: block;
     margin: 0px;
-    padding: 0px;
+    padding: 1.25vw;
 }
 
 nav a
@@ -33,8 +33,6 @@ nav a
     font-size: 1.5rem;
     font-weight: normal;
     text-decoration: none;
-    margin: 0px;
-    padding: 0px;
 }
 
 nav a:hover
@@ -45,7 +43,7 @@ nav a:hover
 nav div#logo
 {
     margin: 0px;
-    padding: 10px;
+    padding: 2.5vw;
 }
 
 nav #navigation-menu
@@ -63,8 +61,8 @@ nav #navigation-menu-icon
     position: absolute;
     width: 7vw;
     height: 7vw;
-    right: 3vw;
     top: 2.5vw;
+    right: 3vw;
 }
 
 nav #navigation-menu-icon>div
@@ -72,7 +70,7 @@ nav #navigation-menu-icon>div
     width: 100%;
     height: 20%;
     background-color: white;
-    margin: 10% 0px;
+    margin: 10% 0;
 }
 
 nav #navigation-menu-icon.close>div
@@ -197,18 +195,12 @@ div.image-caption h1
     nav ul
     {
         float: right;
-        padding: 20px;
     }
     
     nav li
     {
         display: inline-block;
-        padding-right: 20px;
-    }
-
-    nav li:last-child
-    {
-        padding-right: 0px;
+        padding: 1vw;
     }
     
     nav a
@@ -220,7 +212,7 @@ div.image-caption h1
     {
         font-size: 1.8rem;
         float: left;
-        padding: 20px;
+        padding: 1vw;
     }
 
     nav #navigation-menu
@@ -269,24 +261,9 @@ div.image-caption h1
 /* Change style when screen width is between 700px and 1000px */
 @media (min-width: 700px) and (max-width: 1000px)
 {   
-    nav ul
-    {
-        padding: 10px;
-    }
-    
-    nav li
-    {
-        padding-right: 10px;
-    }
-
     nav a
     {
         font-size: 1.5rem;
-    }
-
-    nav div#logo
-    {
-        padding: 10px;
     }
 
     div.image-caption h1
