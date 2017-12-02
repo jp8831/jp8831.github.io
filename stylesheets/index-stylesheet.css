@@ -122,6 +122,11 @@ article
     padding: 3vw;
 }
 
+article :last-child
+{
+    padding-bottom: 0px;
+}
+
 article h1
 {
     font-size: 2rem;
@@ -134,11 +139,6 @@ article p
     font-size: 1.2rem;
     margin: 0px;
     padding-bottom: 1.2rem;
-}
-
-article :last-child
-{
-    padding-bottom: 0px;
 }
 
 footer
@@ -257,8 +257,8 @@ footer p
     }
 }
 
-/* Change style when screen width is between 600px and 1000px */
-@media (min-width: 600px) and (max-width: 1000px)
+/* Change style when screen width is between 600px and 1024px */
+@media (min-width: 600px) and (max-width: 1024px)
 {   
     nav a
     {
