@@ -93,14 +93,14 @@ article h1
 {
     font-size: 2rem;
     margin: 0px;
-    padding-bottom: 3vw;
+    padding-bottom: 2rem;
 }
 
 article p
 {
     font-size: 1.2rem;
     margin: 0px;
-    padding-bottom: 2vw;
+    padding-bottom: 1.2rem;
 }
 
 article :last-child
@@ -114,7 +114,7 @@ footer
     background-color: #1a1a1d;
     color: white;
     text-align: center;
-    padding: 2vw 3vw;
+    padding: 3vw;
 }
 
 footer p
@@ -168,11 +168,13 @@ div.image-caption h1
     article h1
     {
         font-size: 1.8rem;
+        padding-bottom: 1.8rem;
     }
 
     article p
     {
         font-size: 1rem;
+        padding-bottom: 1.8rem;
     }
 
     footer p
@@ -230,13 +232,13 @@ div.image-caption h1
     article h1
     {
         font-size: 3rem;
-        padding-bottom: 1.5vw;
+        padding-bottom: 3rem;
     }
     
     article p
     {
         font-size: 2rem;
-        padding-bottom: 1vw;
+        padding-bottom: 2rem;
     }
 
     footer
@@ -261,6 +263,16 @@ div.image-caption h1
     nav a
     {
         font-size: 1.5rem;
+    }
+
+    article
+    {
+        padding: 5vw;
+    }
+
+    footer
+    {
+        padding: 5vw;
     }
 
     div.image-caption h1
