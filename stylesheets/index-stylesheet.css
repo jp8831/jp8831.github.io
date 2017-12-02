@@ -7,7 +7,7 @@ body
 
 nav
 {
-    background-color: black;
+    background-color: #1a1a1d;
     display: block;
     overflow: hidden;
     text-align: center;
@@ -33,6 +33,7 @@ nav a
     font-size: 1.5rem;
     font-weight: normal;
     text-decoration: none;
+    transition: color 0.2s ease-in-out;
 }
 
 nav a:hover
@@ -61,7 +62,7 @@ nav #navigation-menu-icon
     position: absolute;
     width: 7vw;
     height: 7vw;
-    top: 2.5vw;
+    top: 3vw;
     right: 3vw;
 }
 
@@ -73,21 +74,15 @@ nav #navigation-menu-icon>div
     margin: 10% 0;
 }
 
-nav #navigation-menu-icon.close>div
-{
-    position: absolute;
-}
-
 header
 {
-    font-family: Impact, Charcoal, sans-serif;
+    color: white;
     display: block;
-    margin: 0px;
-    padding: 0px;
 }
 
 article
 {
+    color: #1a1a1d;
     display: block;
     text-align: center;
     margin: 0px;
@@ -116,7 +111,7 @@ article :last-child
 footer
 {
     display: block;    
-    background-color: black;
+    background-color: #1a1a1d;
     color: white;
     text-align: center;
     padding: 2vw 3vw;
@@ -131,14 +126,18 @@ footer p
 
 div.image-container
 {
+    background-color: #1a1a1d;
     position: relative;
+    width: 100%;
+    height: 50vw;
 }
 
 div.image-container img
 {
-    opacity: 0.8;
+    object-fit: cover;
+    opacity: 0.3;
     width: 100%;
-    height: auto;
+    height: 100%;
 }
 
 div.image-caption
@@ -147,8 +146,6 @@ div.image-caption
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    margin: 0px;
-    padding: 0px;
 }
 
 div.image-caption h1
@@ -190,7 +187,7 @@ div.image-caption h1
 }
 
 /* Change style for large devices */
-@media (min-width: 700px)
+@media (min-width: 600px)
 {   
     nav ul
     {
@@ -254,12 +251,12 @@ div.image-caption h1
 
     div.image-caption h1
     {
-        font-size: 7rem;
+        font-size: 6rem;
     }
 }
 
-/* Change style when screen width is between 700px and 1000px */
-@media (min-width: 700px) and (max-width: 1000px)
+/* Change style when screen width is between 600px and 1000px */
+@media (min-width: 600px) and (max-width: 1000px)
 {   
     nav a
     {
@@ -268,6 +265,6 @@ div.image-caption h1
 
     div.image-caption h1
     {
-        font-size: 4rem;
+        font-size: 3rem;
     }
 }
