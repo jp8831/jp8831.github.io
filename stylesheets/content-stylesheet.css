@@ -148,7 +148,8 @@ article div.webgl-canvas-container
     max-width: 80vw;
     max-height: 60vw;
     margin: auto;
-    padding-bottom: 1.2rem;
+    margin-bottom: 1.2rem;
+    padding: 0px;
 }
 
 article div.webgl-canvas-container canvas
