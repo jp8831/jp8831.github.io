@@ -1,21 +1,34 @@
-function OnLoadBody ()
+function RunDemo ()
 {
-    var glContext = null;
-    var canvas  = document.getElementById ("webgl-canvas");
+    let canvas  = document.getElementById ("webgl-canvas");
+    let webgl = new WebGL (canvas);
 
-    glContext = canvas.getContext ("webgl");
+    let isInitFailed = !webgl.Init ();
 
-    if (!glContext)
+    if (isInitFailed)
     {
         alert("사용 중인 브라우저가 WebGL을 지원하지 않습니다.");
-        glContext = null;
-    }
 
-    glContext.clearColor (0.0, 0.0, 0.0, 1.0);
-    glContext.clear(glContext.COLOR_BUFFER_BIT | glContext.DEPTH_BUFFER_BIT);
+        return;
+    }
+    webgl.EnableDepthTest ();
+    webgl.EnableBackFaceCulling ();
+
+    webgl.Clear ();
 }
 
 function OnClickNavigationMenuIcon ()
 {
     document.getElementById ("navigation-menu").classList.toggle ("show");
+}
+
+function IsMobile ()
+{
+    let isAndroid = navigator.userAgent.match (/Android/i);
+    let isIOS = navigator.userAgent.match (/iPhone|iPad|iPod/i);
+    let isOpera = navigator.userAgent.match (/Opera Mini/i);
+    let isWindows = navigator.userAgent.match (/IEMobile/i);
+    let isBlackberry = navigator.userAgent.match (/BlackBerry/i);
+
+    return isAndroid || isIOS || isOpera || isWindows || isBlackberry;
 }
