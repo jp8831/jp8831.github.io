@@ -1,19 +1,19 @@
 @font-face
 {
     font-family: "Nanum Barun Gothic";
-    src: url("fonts/NanumBarunGothic.ttf");
+    src: url("../fonts/NanumBarunGothic.ttf");
 }
 
 @font-face
 {
     font-family: "Nanum Barun Gothic";
-    src: url("fonts/NanumBarunGothicBold.ttf");
+    src: url("../fonts/NanumBarunGothicBold.ttf");
     font-weight: bold;
 }
 
 @font-face {
     font-family: "D2Coding";
-    src: url("fonts/D2Coding.ttf");
+    src: url("../fonts/D2Coding.ttf");
 }
 
 body
