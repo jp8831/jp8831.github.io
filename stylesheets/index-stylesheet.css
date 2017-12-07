@@ -1,14 +1,16 @@
 body
 {
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: "Nanum Barun Gothic", Arial, Helvetica, sans-serif;
+    font-size: 1.2rem;
+    font-weight: normal;
     margin: 0px;
     padding: 0px;
 }
 
 nav
 {
-    background-color: #1a1a1d;
     display: block;
+    background-color: #1a1a1d;
     overflow: hidden;
     text-align: center;
 }
@@ -62,7 +64,7 @@ nav #navigation-menu-icon
     position: absolute;
     width: 7vw;
     height: 7vw;
-    top: 3vw;
+    top: 2.5vw;
     right: 3vw;
 }
 
@@ -76,8 +78,8 @@ nav #navigation-menu-icon>div
 
 header
 {
-    color: white;
     display: block;
+    color: white;
 }
 
 header div.image-container
@@ -108,6 +110,7 @@ header div.image-caption h1
 {
     text-align: center;
     font-size: 2rem;
+    font-weight: bold;
     white-space: nowrap;
     margin: 0px;
     padding: 0px;
@@ -115,30 +118,28 @@ header div.image-caption h1
 
 article
 {
-    color: #1a1a1d;
     display: block;
+    color: #1a1a1d;
     text-align: center;
     margin: 0px;
     padding: 3vw;
 }
 
+article *
+{
+    margin: 0px;
+    margin-bottom: 1.2rem;
+}
+
 article :last-child
 {
-    padding-bottom: 0px;
+    margin-bottom: 0px;
 }
 
 article h1
 {
     font-size: 2rem;
-    margin: 0px;
-    padding-bottom: 1.2rem;
-}
-
-article p
-{
-    font-size: 1.2rem;
-    margin: 0px;
-    padding-bottom: 1.2rem;
+    font-weight: bold;
 }
 
 footer
@@ -152,7 +153,6 @@ footer
 
 footer p
 {
-    font-size: 1.5rem;
     margin: 0px;
     padding: 0px;
 }
@@ -160,6 +160,11 @@ footer p
 /* Change style when screen width is between 0px and 350px */
 @media (max-width: 350px)
 {
+    body
+    {
+        font-size: 1rem;
+    }
+
     nav a
     {
         font-size: 1.2rem;
@@ -170,27 +175,25 @@ footer p
         font-size: 1.8rem;
     }
 
+    article *
+    {
+        margin-bottom: 1rem;
+    }
+
     article h1
     {
-        font-size: 1.8rem;
-        padding-bottom: 1rem;
+        font-size: 1.5rem;
     }
-
-    article p
-    {
-        font-size: 1rem;
-        padding-bottom: 1rem;
-    }
-
-    footer p
-    {
-        font-size: 1.2rem;
-    }    
 }
 
 /* Change style for large devices */
 @media (min-width: 600px)
-{   
+{
+    body
+    {
+        font-size: 2rem;
+    }
+
     nav ul
     {
         float: right;
@@ -233,38 +236,26 @@ footer p
     {
         padding: 2vw 15vw;
     }
+
+    article *
+    {
+        margin-bottom: 2rem;
+    }
     
     article h1
     {
         font-size: 3rem;
-        padding-bottom: 2rem;
-    }
-    
-    article p
-    {
-        font-size: 2rem;
-        padding-bottom: 2rem;
     }
 
     footer
     {
         padding: 2vw 15vw;
     }
-    
-    footer p
-    {
-        font-size: 2rem;
-    }
 }
 
 /* Change style when screen width is between 600px and 1024px */
 @media (min-width: 600px) and (max-width: 1024px)
 {   
-    nav a
-    {
-        font-size: 1.5rem;
-    }
-
     header div.image-caption h1
     {
         font-size: 3rem;
