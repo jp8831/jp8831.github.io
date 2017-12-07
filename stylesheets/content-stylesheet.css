@@ -228,7 +228,7 @@ footer p
 {   
     body
     {
-        font-size: 2rem;
+        font-size: 1.5rem;
     }
 
     nav ul
@@ -276,18 +276,18 @@ footer p
 
     article *
     {
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
     
     article h1
     {
-        font-size: 3rem;
+        font-size: 2.5rem;
     }
 
     article div.webgl-canvas-container
     {
-        width: 60vw;
-        height: 45vw;
+        width: 70vw;
+        height: 52.5vw;
     }
 
     footer
@@ -311,8 +311,8 @@ footer p
 
     article div.webgl-canvas-container
     {
-        width: 80vw;
-        height: 60vw;
+        width: 90vw;
+        height: 67.5vw;
     }
 
     footer
