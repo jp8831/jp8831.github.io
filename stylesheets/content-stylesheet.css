@@ -160,6 +160,14 @@ article h1
     font-weight: bold;
 }
 
+article a
+{
+    font-weight: bold;
+    font-style: italic;
+    text-decoration: none;
+    color: #1a1a1d;
+}
+
 article div.webgl-canvas-container
 {
     width: 80vw;
