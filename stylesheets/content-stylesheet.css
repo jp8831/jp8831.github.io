@@ -180,7 +180,7 @@ article .code
     box-shadow: 3px 3px 10px #d3d3d3;
     line-height: 0px;
     counter-reset: line;
-    overflow: scroll;
+    overflow: auto;
     border-radius: 5px;
     padding: 1vw;
 }
