@@ -173,30 +173,34 @@ article a
     color: #1a1a1d;
 }
 
-article pre
+article .code
 {
-    box-shadow: 3px 3px 5px #d3d3d3;
+    font-family: "D2Coding", "Lucida Console", monospace;
+    font-size: 1rem;
+    box-shadow: 3px 3px 10px #d3d3d3;
     line-height: 0px;
     counter-reset: line;
+    overflow: scroll;
+    border-radius: 5px;
     padding: 1vw;
 }
 
-article pre code
+article .code span
 {
     display: block;
-    font-family: "D2Coding","Lucida Console", Monaco, monospace;
-    font-size: 1rem;
-    line-height: 1.2rem;
+    line-height: 1.5rem;
     counter-increment: line;
     margin: 0px;
     padding: 0px;
 }
 
-article pre code::before
+article span::before
 {
-    border-right: 2px solid #d3d3d3;
+    display: inline-block;
+    width: 1rem;
     content: counter(line);
     margin-right: 0.5rem;
+    border-right: 2px solid #d3d3d3;
     padding-right: 0.5rem;
 }
 
