@@ -138,12 +138,17 @@ article
 {
     display: block;
     color: #1a1a1d;
-    text-align: center;
+    text-align: left;
     margin: 0px;
     padding: 3vw;
 }
 
-article *
+article.center-contents
+{
+    text-align: center;
+}
+
+article>*
 {
     margin: 0px;
     margin-bottom: 1.2rem;
@@ -183,6 +188,40 @@ article div.webgl-canvas-container canvas
 {
     width: 100%;
     height: 100%;
+    margin: 0px;
+    padding: 0px;
+}
+
+article #table-of-contents
+{
+    list-style: none;
+    border-top: 3px solid #1a1a1d;
+    border-bottom: 3px solid #1a1a1d;
+    padding: 0px;
+}
+
+article #table-of-contents li
+{
+    margin: 0px;
+    padding: 1vw;
+}
+
+article #table-of-contents li:first-child
+{
+    padding-top: 2vw;
+}
+
+article #table-of-contents li:last-child
+{
+    padding-bottom: 2vw;
+}
+
+article #table-of-contents a
+{
+    color: #1a1a1d;
+    font-style: italic;
+    font-weight: normal;
+    text-decoration: none;
     margin: 0px;
     padding: 0px;
 }
@@ -236,7 +275,7 @@ footer p
 {   
     body
     {
-        font-size: 1.5rem;
+        font-size: 1.2rem;
     }
 
     nav ul
