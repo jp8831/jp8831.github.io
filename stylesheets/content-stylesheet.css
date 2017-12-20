@@ -173,6 +173,33 @@ article a
     color: #1a1a1d;
 }
 
+article pre
+{
+    box-shadow: 3px 3px 5px #d3d3d3;
+    line-height: 0px;
+    counter-reset: line;
+    padding: 1vw;
+}
+
+article pre code
+{
+    display: block;
+    font-family: "D2Coding","Lucida Console", Monaco, monospace;
+    font-size: 1rem;
+    line-height: 1.2rem;
+    counter-increment: line;
+    margin: 0px;
+    padding: 0px;
+}
+
+article pre code::before
+{
+    border-right: 2px solid #d3d3d3;
+    content: counter(line);
+    margin-right: 0.5rem;
+    padding-right: 0.5rem;
+}
+
 article div.webgl-canvas-container
 {
     width: 80vw;
