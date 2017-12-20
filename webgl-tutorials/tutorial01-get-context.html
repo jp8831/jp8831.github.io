@@ -70,6 +70,52 @@
             </ul>
 
             <h1>
+                HTML Canvas 준비하기
+            </h1>
+            <pre class="code">
+                <span>&lt;body onload="main ()"&gt;</span>
+                <span>    &lt;canvas id="webgl-canvas"&gt;사용 중인 웹브라우저가 &lt;canvas&gt;를 지원하지 않습니다.&lt;/canvas&gt;</span>
+                <span>&lt;/body&gt;</span>
+            </pre>
+            <p>
+                WebGL을 사용해 렌더링한 화면을 보여주기 위해서는 HTML Canvas가 필요하므로 위와 같이 HTML 문서에 Canvas를 추가합니다.
+                그리고 HTML 문서를 불러오면 WebGL을 초기화하기 위해서 <b>&lt;body&gt;</b>에 <b>onload</b> 이벤트를 추가합니다.
+            </p>
+
+            <h1>
+                WebGL 컨텍스트 가져오기
+            </h1>
+            <pre class="code">
+                <span>function main ()</span>
+                <span>{</span>
+                <span>    let canvas = document.getElementById ("webgl-canvas");</span>
+                <span>    let webgl = canvas.getContext ("webgl");</span>
+                <span></span>
+                <span>    if (!webgl)</span>
+                <span>    {</span>
+                <span>        alert("사용 중인 브라우저가 WebGL을 지원하지 않습니다.");</span>
+                <span></span>
+                <span>        return;</span>
+                <span>    }</span>
+                <span></span>
+                <span>    webgl.clearColor (0.0, 0.0, 0.0, 1.0);</span>
+                <span>    webgl.clear (webgl.COLOR_BUFFER_BIT);</span>
+                <span>}</span>
+            </pre>
+            <p>
+                가장 먼저 할 일은 HTML 문서에 있는 Canvas를 가져오는 것입니다.
+                그리고 Canvas로부터 <b>WebGLRenderingContext</b>를 가져옵니다.
+                WebGLRenderingContext를 가져올 수 없다면 <b>getContext</b> 함수는 <b>null</b>을 반환합니다.
+                그리고 이러한 경우에 WebGL을 사용할 수 없음을 알려주는 창을 띄우고 종료합니다.
+                <br><br>
+                WebGLRenderingContext를 가져왔다면 <b>clearColor</b> 함수로 화면을 채울 색을 검은색으로 설정합니다.
+                그리고 <b>clear</b> 함수로 설정한 색으로 화면을 채웁니다.
+                <br><br>
+                축하합니다!
+                지금은 오직 검은 화면을 보여주는 것뿐이지만 WebGL을 사용하기 위한 준비를 모두 마쳤습니다.
+            </p>
+
+            <h1>
                 결과
             </h1>
             <div class="webgl-canvas-container">
