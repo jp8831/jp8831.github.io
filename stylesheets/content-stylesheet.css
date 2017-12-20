@@ -200,6 +200,11 @@ article #table-of-contents
     padding: 0px;
 }
 
+article #table-of-contents.hide
+{
+    display: none;
+}
+
 article #table-of-contents li
 {
     margin: 0px;
