@@ -29,7 +29,10 @@ function main ()
     webgl.clearColor (0.0, 0.0, 0.0, 1.0);
     webgl.clear (webgl.COLOR_BUFFER_BIT);
 
-    shaderProgram = InitShaderProgram (webgl, vertexShaderSource, fragmentShaderSource);
+    let shaderProgram = InitShaderProgram (webgl, vertexShaderSource, fragmentShaderSource);
+    let vertPosAttribLocation = webgl.getAttribLocation (shaderProgram, "aVertexPosition");
+
+    webgl.useProgram (shaderProgram);
 }
 
 function InitShaderProgram (webgl, vertexShaderSource, fragmentShaderSource)
