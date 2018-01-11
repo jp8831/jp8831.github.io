@@ -1,23 +1,16 @@
 function RunDemo ()
 {
-    let webgl = new WebGL ();
+    const WEBGL = new WebGL ();
+    const RESOURCE_LOADER = new ResourceLoader ();
+    const GAME_ENGINE = new GameEngine (WEBGL, RESOURCE_LOADER);
 
-    webgl.canvas = document.getElementById ("webgl-canvas");
-    webgl.Init ();
+    WEBGL.SetCanvas ("webgl-canvas");
 
-    const IS_INIT_WEBGL_FAIL = webgl.canvas === null;
+    RESOURCE_LOADER.SetURIBase ("https://jp8831.github.io");
 
-    if (IS_INIT_WEBGL_FAIL)
-    {
-        alert("사용 중인 브라우저가 WebGL을 지원하지 않습니다.");
-
-        return;
-    }
-
-    webgl.EnableDepthTest ();
-    webgl.EnableBackFaceCulling ();
-
-    webgl.Clear ();
+    GAME_ENGINE.Init ();
+    GAME_ENGINE.Loop ();
+    GAME_ENGINE.Shutdown ();
 }
 
 function IsMobile ()

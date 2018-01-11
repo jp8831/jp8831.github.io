@@ -2,241 +2,317 @@
 *    WebGL    *
 **************/
 
-function WebGL (canvas)
+class WebGL
 {
-    this.canvas = canvas;
-    this.context = null;
-}
-
-WebGL.prototype.Init = function ()
-{
-    let canvas = this.canvas;
-    let context = null;
-
-    if (!canvas)
+    constructor (canvas)
     {
-        return false;
+        this.canvas = canvas;
+        this.context = null;
     }
 
-    context = canvas.getContext ("webgl");
-
-    if (!context)
+    Init ()
     {
-        return false;
+        const CANVAS = this.canvas;
+        const IS_CANVAS_INVALID = CANVAS === null;
+
+        if (IS_CANVAS_INVALID)
+        {
+            return false;
+        }
+
+        const CONTEXT = CANVAS.getContext ("webgl");
+        const IS_CONTEXT_INVALID = CONTEXT === null;
+
+        if (IS_CONTEXT_INVALID)
+        {
+            return false;
+        }
+
+        this.context = CONTEXT;
+
+        return true;
     }
 
-    this.context = context;
-
-    return true;
-}
-
-WebGL.prototype.EnableDepthTest = function ()
-{
-    let context = this.context;
-
-    context.depthFunc (context.LEQUAL);
-    context.enable (context.DEPTH_TEST);
-}
-
-WebGL.prototype.DisableDepthTest = function ()
-{
-    let context = this.context;
-
-    context.disable (context.DEPTH_TEST);
-}
-
-WebGL.prototype.EnableBackFaceCulling = function ()
-{
-    let context = this.context;
-
-    context.cullFace (context.BACK);
-    context.enable (context.CULL_FACE);
-}
-
-WebGL.prototype.DisableBackFaceCulling = function ()
-{
-    let context = this.context;
-
-    context.disable (context.CULL_FACE);
-}
-
-WebGL.prototype.Clear = function ()
-{
-    let context = this.context;
-
-    context.clearColor (0.0, 0.0, 0.0, 1.0);
-    context.clearDepth (1.0);
-
-    context.clear (context.COLOR_BUFFER_BIT | context.DEPTH_BUFFER_BIT);
-}
-
-function Buffer (context)
-{
-    this.buffer = null;
-    this.context = context;
-}
-
-Buffer.prototype.Create = function ()
-{
-    let context = this.context;
-
-    if (!context)
+    SetCanvas (canvasID)
     {
-        return false;
+        this.canvas = document.getElementById (canvasID);
     }
 
-    let buffer = context.createBuffer ();
-    let isBufferInvalid = context.isBuffer (buffer);
-
-    if (isBufferInvalid)
+    EnableBackFaceCulling ()
     {
-        return false;
+        const CONTEXT = this.context;
+
+        CONTEXT.cullFace (CONTEXT.BACK);
+        CONTEXT.enable (CONTEXT.CULL_FACE);
     }
 
-    this.buffer = buffer;
+    DisableBackFaceCulling ()
+    {
+        const CONTEXT = this.context;
 
-    return true;
+        CONTEXT.disable (CONTEXT.CULL_FACE);
+    }
+
+    EnableDepthTest ()
+    {
+        const CONTEXT = this.context;
+
+        CONTEXT.depthFunc (CONTEXT.LEQUAL);
+        CONTEXT.enable (CONTEXT.DEPTH_TEST);
+    }
+
+    DisableDepthTest ()
+    {
+        const CONTEXT = this.context;
+
+        CONTEXT.disable (CONTEXT.DEPTH_TEST);
+    }
+
+    Clear (isClearColor, isClearDepth, isClearStencil)
+    {
+        const CONTEXT = this.context;
+
+        let mask = 0;
+
+        if (isClearColor)
+        {
+            mask |= CONTEXT.COLOR_BUFFER_BIT;
+        }
+
+        if (isClearDepth)
+        {
+            mask |= CONTEXT.DEPTH_BUFFER_BIT;
+        }
+
+        if (isClearStencil)
+        {
+            mask |= CONTEXT.STENCIL_BUFFER_BIT;
+        }
+
+        CONTEXT.clear (mask);
+    }
+    
+    SetClearColor (red, green, blue, alpha)
+    {
+        const CONTEXT = this.context;
+
+        CONTEXT.clearColor (red, green, blue, alpha);
+    }
+    
+    SetClearDepth (depth)
+    {
+        const CONTEXT = this.context;
+
+        CONTEXT.clearDepth (depth);
+    }
+
+    SetClearStencil (stencil)
+    {
+        const CONTEXT = this.context;
+
+        CONTEXT.clearStencil (stencil);
+    }
 }
 
-Buffer.prototype.SetData = function (data)
+const BUFFER_TYPE = 
 {
-    let buffer = this.buffer;
-    let context = this.context;
-
-    context.bindBuffer (context.ARRAY_BUFFER, buffer);
-    context.bufferData (context.ARRAY_BUFFER, new Float32Array (data), context.STATIC_DRAW);
+    Array : 1,
+    ElementArray : 2
 }
 
-Buffer.prototype.Delete = function ()
+const BUFFER_USAGE = 
 {
-    let buffer = this.buffer;
-    let context = this.context;
-
-    context.deleteBuffer (buffer);
-
-    this.buffer = null;
+    Static : 1,
+    Dynamic : 2
 }
 
-const UniformType = 
+class Buffer
+{
+    constructor (context, type, usage)
+    {
+        this.context = context;
+        this.buffer = null;
+        this.type = type;
+        this.usage = usage;
+    }
+
+    Create ()
+    {
+        const CONTEXT = this.context;
+
+        this.buffer = CONTEXT.createBuffer ();
+    }
+
+    SetData (data)
+    {
+        const CONTEXT = this.context;
+        const BUFFER = this.buffer;
+        const TYPE = this.type;
+        const USAGE = this.usage;
+
+        let type;
+
+        if (TYPE === BUFFER_TYPE.Array)
+        {
+            type = CONTEXT.ARRAY_BUFFER;
+        }
+        else if (TYPE === BUFFER_TYPE.ElementArray)
+        {
+            type = CONTEXT.ELEMENT_ARRAY_BUFFER;
+        }
+
+        let usage;
+
+        if (USAGE === BUFFER_USAGE.Static)
+        {
+            usage = CONTEXT.STATIC_DRAW;
+        }
+        else if (USAGE === BUFFER_USAGE.Dynamic)
+        {
+            usage = CONTEXT.DYNAMIC_DRAW;
+        }
+
+        CONTEXT.bindBuffer (type, BUFFER);
+        CONTEXT.bufferData (type, data, usage);
+    }
+
+    Delete ()
+    {
+        const CONTEXT = this.context;
+        const BUFFER = this.buffer;
+
+        CONTEXT.deleteBuffer (BUFFER);
+
+        this.buffer = null;
+    }
+}
+
+const SHADER_TYPE = 
+{
+    Vertex : 1,
+    Fragment : 2
+}
+
+const UNIFORM_TYPE = 
 {
     Vector4 : 1,
     Matrix4: 2
 }
 
-function Shader (context)
+class ShaderProgram
 {
-    this.context = context;
-    this.program = null;
-    this.vertexShader = null;
-    this.fragmentShader = null;
-}
-
-Shader.prototype.Init = function ()
-{
-    const CONTEXT = this.context;
-
-    this.program = CONTEXT.createProgram ();
-    this.vertexShader = CONTEXT.createShader (CONTEXT.VERTEX_SHADER);
-    this.fragmentShader = CONTEXT.createShader (CONTEXT.FRAGMENT_SHADER);
-}
-
-Shader.prototype.Load = function (vertexSource, fragmentSource)
-{
-    const CONTEXT = this.context;
-
-    // Compile
-    const VERTEX_SHADER = this.vertexShader;
-
-    CONTEXT.shaderSource (VERTEX_SHADER, vertexSource);
-    CONTEXT.compileShader (this.vertexShader);
-
-    const IS_VERTEX_COMPILE_FAILED = !CONTEXT.getShaderParameter (VERTEX_SHADER, CONTEXT.COMPILE_STATUS);
-
-    if (IS_VERTEX_COMPILE_FAILED)
+    constructor (context)
     {
-        return false;
+        this.context = context;
+        this.program = null;
+        this.vertexShader = null;
+        this.fragmentShader = null;
     }
 
-    const FRAGMENT_SHADER = this.fragmentShader;
-
-    CONTEXT.shaderSource (FRAGMENT_SHADER, fragmentSource);
-    CONTEXT.compileShader (FRAGMENT_SHADER);
-
-    const IS_FRAGMENT_COMPILE_FAILED = !CONTEXT.getShaderParameter (FRAGMENT_SHADER, CONTEXT.COMPILE_STATUS);
-
-    if (IS_FRAGMENT_COMPILE_FAILED)
+    Init ()
     {
-        return false;
+        const CONTEXT = this.context;
+
+        this.program = CONTEXT.createProgram ();
+        this.vertexShader = CONTEXT.createShader (CONTEXT.VERTEX_SHADER);
+        this.createShader = CONTEXT.createShader (CONTEXT.FRAGMENT_SHADER);
     }
 
-    // Link
-    const PROGRAM = this.program;
-
-    CONTEXT.attachShader (PROGRAM, VERTEX_SHADER);
-    CONTEXT.attachShader (PROGRAM, FRAGMENT_SHADER);
-    CONTEXT.linkProgram (PROGRAM);
-
-    const IS_LINK_FAILED = !CONTEXT.getProgramParameter (PROGRAM, CONTEXT.LINK_STATUS);
-
-    if (IS_LINK_FAILED)
+    Load (vertexShaderSource, fragmentShaderSource)
     {
-        return false;
-    }
+        const CONTEXT = this.context;
+        const PROGRAM = this.program;
+        const VERTEX_SHADER = this.vertexShader;
+        const FRAGMENT_SHADER = this.fragmentShader;
 
-    return true;
-}
-
-Shader.prototype.Delete = function ()
-{
-    const CONTEXT = this.context;
-    const PROGRAM = this.program;
-    const VERTEX_SHADER = this.vertexShader;
-    const FRAGMENT_SHADER = this.fragmentShader;
-
-    CONTEXT.detachShader (PROGRAM, VERTEX_SHADER);
-    CONTEXT.detachShader (PROGRAM, FRAGMENT_SHADER);
-
-    CONTEXT.deleteShader (VERTEX_SHADER);
-    CONTEXT.deleteShader (PROGRAM, FRAGMENT_SHADER);
-
-    CONTEXT.deleteProgram (PROGRAM);
-
-    this.program = null;
-    this.vertexShader = null;
-    this.fragmentShader = null;
-}
-
-Shader.prototype.SetAttribute = function (attributeName, attributeBuffer, elementSize)
-{
-    const CONTEXT = this.context;
-    const PROGRAM = this.program;
-    const ATTRIBUTE_LOCATION = CONTEXT.getAttribLocation (PROGRAM, attributeName);
-
-    CONTEXT.bindBuffer (CONTEXT.ARRAY_BUFFER, attributeBuffer.buffer);
-    CONTEXT.enableAttribArray (ATTRIBUTE_LOCATION);
-    CONTEXT.vertexAttribPointer (ATTRIBUTE_LOCATION, elementSize, CONTEXT.FLOAT, false, 0, 0);
-}
-
-Shader.prototype.SetUniform = function (uniformName, uniformData, uniformType)
-{
-    const CONTEXT = this.context;
-    const PROGRAM = this.program;
-    const UNIFORM_LOCATION = CONTEXT.getUniformLocation (PROGRAM, uniformName);
-
-    switch (uniformType)
-    {
-        case UniformType.Vector4 :
+        // Compile
+        CONTEXT.shaderSource (VERTEX_SHADER, vertexShaderSource);
+        CONTEXT.compileShader (VERTEX_SHADER);
+    
+        const IS_VERTEX_COMPILE_FAILED = !CONTEXT.getShaderParameter (VERTEX_SHADER, CONTEXT.COMPILE_STATUS);
+    
+        if (IS_VERTEX_COMPILE_FAILED)
         {
-            CONTEXT.uniform4fv (UNIFORM_LOCATION, new Float32Array (uniformData));
-
-            break;
+            return false;
         }
-
-        case UniformType.Matrix4 :
+    
+        CONTEXT.shaderSource (FRAGMENT_SHADER, fragmentShaderSource);
+        CONTEXT.compileShader (FRAGMENT_SHADER);
+    
+        const IS_FRAGMENT_COMPILE_FAILED = !CONTEXT.getShaderParameter (FRAGMENT_SHADER, CONTEXT.COMPILE_STATUS);
+    
+        if (IS_FRAGMENT_COMPILE_FAILED)
         {
-            CONTEXT.uniformMatrix4fv (UNIFORM_LOCATION, false, new Float32Array (uniformData));
+            return false;
+        }
+    
+        // Link
+        CONTEXT.attachShader (PROGRAM, VERTEX_SHADER);
+        CONTEXT.attachShader (PROGRAM, FRAGMENT_SHADER);
+        CONTEXT.linkProgram (PROGRAM);
+    
+        const IS_LINK_FAILED = !CONTEXT.getProgramParameter (PROGRAM, CONTEXT.LINK_STATUS);
+    
+        if (IS_LINK_FAILED)
+        {
+            return false;
+        }
+    
+        return true;
+    }
 
-            break;
+    Delete ()
+    {
+        const CONTEXT = this.context;
+        const PROGRAM = this.program;
+        const VERTEX_SHADER = this.vertexShader;
+        const FRAGMENT_SHADER = this.fragmentShader;
+    
+        CONTEXT.detachShader (PROGRAM, VERTEX_SHADER);
+        CONTEXT.detachShader (PROGRAM, FRAGMENT_SHADER);
+    
+        CONTEXT.deleteShader (VERTEX_SHADER);
+        CONTEXT.deleteShader (PROGRAM, FRAGMENT_SHADER);
+    
+        CONTEXT.deleteProgram (PROGRAM);
+    
+        this.program = null;
+        this.vertexShader = null;
+        this.fragmentShader = null;
+    }
+
+    SetAttribute (name, buffer, elementSize)
+    {
+        const CONTEXT = this.context;
+        const PROGRAM = this.program;
+        const ATTRIBUTE_LOCATION = CONTEXT.getAttribLocation (PROGRAM, name);
+    
+        CONTEXT.bindBuffer (CONTEXT.ARRAY_BUFFER, buffer.buffer);
+        CONTEXT.enableAttribArray (ATTRIBUTE_LOCATION);
+        CONTEXT.vertexAttribPointer (ATTRIBUTE_LOCATION, elementSize, CONTEXT.FLOAT, false, 0, 0);
+    }
+
+    SetUniform (name, data, type)
+    {
+        const CONTEXT = this.context;
+        const PROGRAM = this.program;
+        const UNIFORM_LOCATION = CONTEXT.getUniformLocation (PROGRAM, name);
+    
+        switch (uniformType)
+        {
+            case UNIFORM_TYPE.Vector4 :
+            {
+                CONTEXT.uniform4fv (UNIFORM_LOCATION, data);
+    
+                break;
+            }
+    
+            case UNIFORM_TYPE.Matrix4 :
+            {
+                CONTEXT.uniformMatrix4fv (UNIFORM_LOCATION, false, data);
+    
+                break;
+            }
         }
     }
 }
@@ -245,257 +321,367 @@ Shader.prototype.SetUniform = function (uniformName, uniformData, uniformType)
 *    Game Engine    *
 ********************/
 
-function GameEngine ()
+class GameEngine
 {
+    constructor (webgl, resourceLoader)
+    {
+        this.webgl = webgl;
+        this.resourceLoader = resourceLoader;
+        this.previousTime = 0;
+        this.isFirstLoop = true;
+        this.isShutdown = false;
+    }
 
+    Init ()
+    {
+        const WEBGL = this.webgl;
+
+        WEBGL.Init ();
+        WEBGL.EnableDepthTest ();
+        WEBGL.EnableBackFaceCulling ();
+
+        WEBGL.SetClearColor (0, 0, 0, 1);
+        WEBGL.SetClearDepth (1);
+        WEBGL.Clear (true, true, false);
+    }
+
+    Loop ()
+    {   
+        const IS_CONTINUE_LOOP = !this.isShutdown;
+
+        if (IS_CONTINUE_LOOP)
+        {
+            const ENGINE = this;
+
+            requestAnimationFrame (function (time)
+            {
+                const IS_FIRST_LOOP = ENGINE.isFirstLoop;
+
+                if (IS_FIRST_LOOP)
+                {
+                    ENGINE.isFirstLoop = false;
+                    ENGINE.previousTime = time;
+                }
+
+                const PREVIOUS_TIME = ENGINE.previousTime;
+                const DELTA_TIME = (PREVIOUS_TIME - time) * 0.001;
+
+                ENGINE.Update (DELTA_TIME);
+                ENGINE.Render ();
+
+                ENGINE.previousTime = time;
+
+                ENGINE.Loop ();
+            });
+        }
+    }
+
+    Update (deltaTime)
+    {
+        console.log (deltaTime);
+    }
+
+    Render ()
+    {
+
+    }
+
+    Shutdown ()
+    {
+        this.isShutdown = true;
+    }
 }
 
-GameEngine.prototype.Init = function ()
-{
-
-}
-
-GameEngine.prototype.Update = function ()
-{
-
-}
-
-GameEngine.prototype.Render = function ()
-{
-
-}
-
-GameEngine.prototype.Shutdown = function ()
-{
-
-}
-
-const ResourceLoadingStatus = 
+const RESOURCE_LOADING_STATUS = 
 {
     Loading : 1,
     Finish : 2
 }
 
-const ResourceType = 
+const RESOURCE_TYPE = 
 {
     ShaderSource : 1,
     MeshData : 2,
     Texture : 3
 }
 
-function ResourceLoader ()
+class ResourceLoader
 {
-    this.status = ResourceLoadingStatus.Finish;
-    this.baseURL = "";
-}
-
-ResourceLoader.prototype.SetBaseURL = function (baseURL)
-{
-    this.baseURL = baseURL;
-}
-
-ResourceLoader.prototype.LoadResource = function (resourceType, resourceName)
-{
-    this.status = ResourceLoadingStatus.Loading;
-
-    let resourceURI = this.baseURL;
-    let responseType;
-
-    switch (resourceType)
+    constructor ()
     {
-        case ResourceType.ShaderSource :
-        {
-            resourceURI += "/shaders/" + resourceName;
-            responseType = "text";
-
-            break;
-        }
-
-        case ResourceType.MeshData :
-        {
-            resourceURI += "/meshes/" + resourceName;
-            responseType = "text";
-            
-            break;
-        }
-
-        case ResourceType.Texture :
-        {
-            resourceURI += "/textures/" + resourceName;
-            responseType = "arraybuffer";
-            
-            break;
-        }
+        this.status = RESOURCE_LOADING_STATUS.Finish;
+        this.loadingCount = 0;
+        this.uriBase = "";
     }
 
-    return this.MakeHTTPRequest (resourceURI, responseType);
-}
-
-ResourceLoader.prototype.MakeHTTPRequest = function (uri, responseType)
-{
-    let loader = this;
-    
-    return new Promise (function (resolve, reject)
+    SetURIBase (uriBase)
     {
-        let httpRequest = new XMLHttpRequest ();
+        this.uriBase = uriBase;
+    }
 
-        httpRequest.addEventListener ("load", function (event)
+    Load (resourceName, resourceType)
+    {
+        this.status = RESOURCE_LOADING_STATUS.Loading;
+        this.loadingCount++;
+
+        let resourceURI = this.uriBase;
+        let responseType;
+
+        switch (resourceType)
         {
-            loader.status = ResourceLoadingStatus.Finish;
-            resolve (this.response);
-        });
-    
-        httpRequest.addEventListener ("abort", function (event)
+            case RESOURCE_TYPE.ShaderSource :
+            {
+                resourceURI += "/shaders/" + resourceName;
+                responseType = "text";
+
+                break;
+            }
+
+            case RESOURCE_TYPE.MeshData :
+            {
+                resourceURI += "/meshes/" + resourceName;
+                responseType = "text";
+
+                break;
+            }
+
+            case RESOURCE_TYPE.Texture :
+            {
+                resourceURI += "/textures/" + resourceName;
+                responseType = "arraybuffer";
+
+                break;
+            }
+        }
+
+        return this.MakeHTTPRequest (resourceURI, responseType);
+    }
+
+    MakeHTTPRequest (uri, responseType)
+    {
+        const LOADER = this;
+
+        return new Promise (function (resolve, reject)
         {
-           reject (this.statusText); 
+            const HTTP_REQUEST = new XMLHttpRequest ();
+
+            const WHEN_LOADING_SUCCESS = function (event)
+            {
+                LOADER.loadingCount--;
+
+                if (LOADER.loadingCount === 0)
+                {
+                    LOADER.status = RESOURCE_LOADING_STATUS.Finish;
+                }
+
+                resolve (this.response);
+            };
+            
+            const WHEN_LOADING_FAIL = function (event)
+            {
+                reject (new Error ("Failed to load resource."));
+            };
+
+            HTTP_REQUEST.addEventListener ("load", WHEN_LOADING_SUCCESS);
+            HTTP_REQUEST.addEventListener ("abort", WHEN_LOADING_FAIL);
+            HTTP_REQUEST.addEventListener ("error", WHEN_LOADING_FAIL);
+            HTTP_REQUEST.addEventListener ("timeout", WHEN_LOADING_FAIL);
+
+            HTTP_REQUEST.open ("GET", uri);
+            HTTP_REQUEST.responseType = responseType;
+            HTTP_REQUEST.send ();
         });
-    
-        httpRequest.addEventListener ("error", function (event)
-        {
-           reject (this.statusText);
-        });
-    
-        httpRequest.open ("GET", uri);
-        httpRequest.responseType = responseType;
-        httpRequest.send ();
-    });
-}
-
-function Mesh ()
-{
-
-}
-
-/*************
-*    Math    *
-*************/
-
-var Vector3 =
-{
-    FromXYZ (x, y, z)
-    {
-        return [x, y, z];
-    },
-
-    FromVector4 (vector)
-    {
-        return [vector[0], vector[1], vector[2]] / vector[3];
-    },
-
-    Magnitude (vector)
-    {
-        return Math.sqrt ((vector[0] * vector[0]) + (vector[1] * vector[1]) + (vector[2] * vector[2]));
-    },
-
-    SquaredMagnitude (vector)
-    {
-        return (vector[0] * vector[0]) + (vector[1] * vector[1]) + (vector[2] * vector[2]);
-    },
-
-    DotProduct (vectorA, vectorB)
-    {
-        return (vectorA[0] * vectorB[0]) + (vectorA[1] * vectorB[1]) + (vectorA[2] * vectorB[2]);
-    },
-
-    CrossProduct (vectorA, vectorB)
-    {
-        var x = (vectorA[1] * vectorB[2]) - (vectorA[2] * vectorB[1]);
-        var y = (vectorA[2] * vectorB[0]) - (vectorA[0] * vectorB[2]);
-        var z = (vectorA[0] * vectorB[1]) - (vectorA[1] * vectorB[0]);
-
-        return [x, y, z];
     }
 }
 
-var Vector4 =
+class Mesh
 {
-    FromXYZW (x, y, z, w)
+    constructor ()
+    {
+
+    }
+
+    static ParseObj (obj)
+    {
+
+    }
+}
+
+/**************************
+*    Vector and Matrix    *
+**************************/
+
+class Vector3
+{
+    static FromElements (x, y, z)
+    {
+        return [x, y, z];
+    }
+
+    static FromVector4 (vector)
+    {
+        const X = vector[0] / vector[3];
+        const Y = vector[1] / vector[3];
+        const Z = vector[2] / vector[3];
+
+        return [X, Y, Z];
+    }
+
+    static Magnitude (vector)
+    {
+        const X_SQUARE = Math.pow (vector[0], 2);
+        const Y_SQUARE = Math.pow (vector[1], 2);
+        const Z_SQUARE = Math.pow (vector[2], 2);
+
+        return Math.sqrt (X_SQUARE + Y_SQUARE + Z_SQUARE);
+    }
+
+    static SquaredMagnitude (vector)
+    {
+        const X_SQUARE = Math.pow (vector[0], 2);
+        const Y_SQUARE = Math.pow (vector[1], 2);
+        const Z_SQUARE = Math.pow (vector[2], 2);
+
+        return (X_SQUARE + Y_SQUARE + Z_SQUARE);
+    }
+
+    static DotProduct (vectorA, vectorB)
+    {
+        const X_PRODUCT = vectorA[0] * vectorB[0];
+        const Y_PRODUCT = vectorA[1] * vectorB[1];
+        const Z_PRODUCT = vectorA[2] * vectorB[2];
+
+        return (X_PRODUCT + Y_PRODUCT + Z_PRODUCT);
+    }
+
+    static CrossProduct (vectorA, vectorB)
+    {
+        const X = (vectorA[1] * vectorB[2]) - (vectorA[2] * vectorB[1]);
+        const Y = (vectorA[2] * vectorB[0]) - (vectorA[0] * vectorB[2]);
+        const Z = (vectorA[0] * vectorB[1]) - (vectorA[1] * vectorB[0]);
+
+        return [X, Y, Z];
+    }
+}
+
+class Vector4
+{
+    static FromElements (x, y, z, w)
     {
         return [x, y, z, w];
-    },
+    }
 
-    FromVector3 (vector, w)
+    static FromVector3 (vector, w)
     {
-        return [vector[0], vector[1], vector[2], w];
-    },
+        const X = vector[0];
+        const Y = vector[1];
+        const Z = vector[2];
 
-    Magnitude (vector)
-    {
-        return Math.sqrt ((vector[0] * vector[0]) + (vector[1] * vector[1]) + (vector[2] * vector[2]) + (vector[3] * vector[3]));
-    },
+        return [X, Y, Z, w];
+    }
 
-    SquaredMagnitude (vector)
+    static Magnitude (vector)
     {
-        return (vector[0] * vector[0]) + (vector[1] * vector[1]) + (vector[2] * vector[2]) + (vector[3] * vector[3]);
-    },
+        const X_SQUARE = Math.pow (vector[0], 2);
+        const Y_SQUARE = Math.pow (vector[1], 2);
+        const Z_SQUARE = Math.pow (vector[2], 2);
+        const W_SQUARE = Math.pow (vector[3], 2);
 
-    DotProduct (vectorA, vectorB)
+        return Math.sqrt (X_SQUARE + Y_SQUARE + Z_SQUARE + W_SQUARE);
+    }
+
+    static SquaredMagnitude (vector)
     {
-        return (vectorA[0] * vectorB[0]) + (vectorA[1] * vectorB[1]) + (vectorA[2] * vectorB[2]) + (vectorA[3] * vectorB[3]);
+        const X_SQUARE = Math.pow (vector[0], 2);
+        const Y_SQUARE = Math.pow (vector[1], 2);
+        const Z_SQUARE = Math.pow (vector[2], 2);
+        const W_SQUARE = Math.pow (vector[3], 2);
+
+        return (X_SQUARE + Y_SQUARE + Z_SQUARE + W_SQUARE);
+    }
+
+    static DotProduct (vectorA, vectorB)
+    {
+        const X_PRODUCT = vectorA[0] * vectorB[0];
+        const Y_PRODUCT = vectorA[1] * vectorB[1];
+        const Z_PRODUCT = vectorA[2] * vectorB[2];
+        const W_PRODUCT = vectorA[3] * vectorB[3];
+
+        return (X_PRODUCT + Y_PRODUCT + Z_PRODUCT + W_PRODUCT);
     }
 }
 
-var Matrix4 = 
+class Matrix4
 {
-    identity :
-    [
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-    ],
-
-    Projection (fov, aspectRatio, near, far)
+    static Identity ()
     {
-        var yScale = 1 / Math.tan (0.5 * fov);
-        var xScale = yScale / aspectRatio;
-        var range = far - near;
+        return [
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        ];
+    }
+
+    static Projection (fov, width, height, near, far)
+    {
+        const ASPECT_RATIO = width / height;
+        const RANGE = far - near;
+        const Y_SCALE = 1 / Math.tan (0.5 * fov);
+        const X_SCALE = Y_SCALE / ASPECT_RATIO;
+        
+        return [
+            X_SCALE, 0, 0, 0,
+            0, Y_SCALE, 0, 0,
+            0, 0, far / RANGE, 1,
+            0, 0, -(near * far) / RANGE, 0
+        ];
+    }
+
+    static MultiplyVector4Matrix4 (vector, matrix)
+    {
+        const X = (vector[0] * matrix[0]) + (vector[1] * matrix[4]) + (vector[2] * matrix[8]) + (vector[3] * matrix[12]);
+        const Y = (vector[0] * matrix[1]) + (vector[1] * matrix[5]) + (vector[2] * matrix[9]) + (vector[3] * matrix[13]);
+        const Z = (vector[0] * matrix[2]) + (vector[1] * matrix[6]) + (vector[2] * matrix[10]) + (vector[3] * matrix[14]);
+        const W = (vector[0] * matrix[3]) + (vector[1] * matrix[7]) + (vector[2] * matrix[11]) + (vector[3] * matrix[15]);
+
+        return [X, Y, Z, W];
+    }
+
+    static MultiplyMatrix4Matrix4 (matrixA, matrixB)
+    {
+        const ROW_0 = [matrixA[0], matrixA[1], matrixA[2], matrixA[3]];
+        const ROW_1 = [matrixA[4], matrixA[5], matrixA[6], matrixA[7]];
+        const ROW_2 = [matrixA[8], matrixA[9], matrixA[10], matrixA[11]];
+        const ROW_3 = [matrixA[12], matrixA[13], matrixA[14], matrixA[15]];
+
+        const COL_0 = [matrixB[0], matrixB[4], matrixB[8], matrixB[12]];
+        const COL_1 = [matrixB[1], matrixB[5], matrixB[9], matrixB[13]];
+        const COL_2 = [matrixB[2], matrixB[6], matrixB[10], matrixB[14]];
+        const COL_3 = [matrixB[3], matrixB[7], matrixB[11], matrixB[15]];
 
         return [
-            xScale, 0, 0, 0,
-            0, yScale, 0, 0,
-            0, 0, far / range, 1,
-            0, 0, -(near * far) / range, 0
+            Vector4.DotProduct (ROW_0, COL_0), Vector4.DotProduct (ROW_0, COL_1), Vector4.DotProduct (ROW_0, COL_2), Vector4.DotProduct (ROW_0, COL_3),
+            Vector4.DotProduct (ROW_1, COL_0), Vector4.DotProduct (ROW_1, COL_1), Vector4.DotProduct (ROW_1, COL_2), Vector4.DotProduct (ROW_1, COL_3),
+            Vector4.DotProduct (ROW_2, COL_0), Vector4.DotProduct (ROW_2, COL_1), Vector4.DotProduct (ROW_2, COL_2), Vector4.DotProduct (ROW_2, COL_3),
+            Vector4.DotProduct (ROW_3, COL_0), Vector4.DotProduct (ROW_3, COL_1), Vector4.DotProduct (ROW_3, COL_2), Vector4.DotProduct (ROW_3, COL_3),
         ];
     }
 }
 
-function MultiplyVector4Matrix4 (vector, matrix)
+/*****************
+*    Rotation    *
+*****************/
+
+class Angle
 {
-    var x = (vector[0] * matrix[0]) + (vector[1] * matrix[4]) + (vector[2] * matrix[8]) + (vector[3] * matrix[12]);
-    var y = (vector[0] * matrix[1]) + (vector[1] * matrix[5]) + (vector[2] * matrix[9]) + (vector[3] * matrix[13]);
-    var z = (vector[0] * matrix[2]) + (vector[1] * matrix[6]) + (vector[2] * matrix[10]) + (vector[3] * matrix[14]);
-    var w = (vector[0] * matrix[3]) + (vector[1] * matrix[7]) + (vector[2] * matrix[11]) + (vector[3] * matrix[15]);
+    static DegToRad (degrees)
+    {
+        return (Math.PI / 180) * degrees;
+    }
 
-    return [x, y, z, w];
-}
-
-function MultiplyMatrix4Matrix4 (matrixA, matrixB)
-{
-    var row0 = [matrixA[0], matrixA[1], matrixA[2], matrixA[3]];
-    var row1 = [matrixA[4], matrixA[5], matrixA[6], matrixA[7]];
-    var row2 = [matrixA[8], matrixA[9], matrixA[10], matrixA[11]];
-    var row3 = [matrixA[12], matrixA[13], matrixA[14], matrixA[15]];
-
-    var col0 = [matrixB[0], matrixB[4], matrixB[8], matrixB[12]];
-    var col1 = [matrixB[1], matrixB[5], matrixB[9], matrixB[13]];
-    var col2 = [matrixB[2], matrixB[6], matrixB[10], matrixB[14]];
-    var col3 = [matrixB[3], matrixB[7], matrixB[11], matrixB[15]];
-
-    return [
-        Vector4.DotProduct (row0, col0), Vector4.DotProduct (row0, col1), Vector4.DotProduct (row0, col2), Vector4.DotProduct (row0, col3),
-        Vector4.DotProduct (row1, col0), Vector4.DotProduct (row1, col1), Vector4.DotProduct (row1, col2), Vector4.DotProduct (row1, col3),
-        Vector4.DotProduct (row2, col0), Vector4.DotProduct (row2, col1), Vector4.DotProduct (row2, col2), Vector4.DotProduct (row2, col3),
-        Vector4.DotProduct (row3, col0), Vector4.DotProduct (row3, col1), Vector4.DotProduct (row3, col2), Vector4.DotProduct (row3, col3),
-    ];
-}
-
-function DegToRad (degrees)
-{
-    return (Math.PI / 180) * degrees;
-}
-
-function RadToDeg (radians)
-{
-    return (180 / Math.PI) * radians;
+    static RadToDeg (radians)
+    {
+        return (180 / Math.PI) * radians;
+    }
 }
