@@ -4,205 +4,236 @@
 
 class WebGL
 {
-    constructor (canvas)
+    constructor ()
     {
-        this.canvas = canvas;
+        this.canvas = null;
         this.context = null;
     }
 
-    Init ()
+    Init (canvasId)
     {
-        const CANVAS = this.canvas;
-        const IS_CANVAS_INVALID = CANVAS === null;
-
-        if (IS_CANVAS_INVALID)
+        if (Assert (typeof canvasId === "string", "Canvas id must be a string.", "WebGL.Init"))
         {
             return false;
         }
 
-        const CONTEXT = CANVAS.getContext ("webgl");
-        const IS_CONTEXT_INVALID = CONTEXT === null;
+        // Get canvas for WebGL by ID.
+        const canvas = document.getElementById (canvasId);
 
-        if (IS_CONTEXT_INVALID)
+        if (Assert (canvas !== null, "Canvas id is wrong.", "WebGL.Init"))
         {
             return false;
         }
 
-        this.context = CONTEXT;
+        this.canvas = canvas;
+
+        // Get WebGL context of canvas.
+        const context = canvas.getContext ("webgl");
+
+        if (Assert (context !== null, "Getting WebGL rendering context is failed.", "WebGL.Init"))
+        {
+            return false;
+        }
+
+        this.context = context;
 
         return true;
     }
 
-    SetCanvas (canvasID)
+    EnableCullingFrontFace ()
     {
-        this.canvas = document.getElementById (canvasID);
+        const context = this.context;
+
+        context.cullFace (context.FRONT);
+        context.enable (context.CULL_FACE);
     }
 
-    EnableBackFaceCulling ()
+    EnableCullingBackFace ()
     {
-        const CONTEXT = this.context;
+        const context = this.context;
 
-        CONTEXT.cullFace (CONTEXT.BACK);
-        CONTEXT.enable (CONTEXT.CULL_FACE);
+        context.cullFace (context.BACK);
+        context.enable (context.CULL_FACE);
     }
 
-    DisableBackFaceCulling ()
+    EnableCullingFrontAndBackFace ()
     {
-        const CONTEXT = this.context;
+        const context = this.context;
 
-        CONTEXT.disable (CONTEXT.CULL_FACE);
+        context.cullFace (context.FRONT_AND_BACK);
+        context.enable (context.CULL_FACE);
+    }
+
+    DisableCullingFace ()
+    {
+        const context = this.context;
+
+        context.disable (context.CULL_FACE);
     }
 
     EnableDepthTest ()
     {
-        const CONTEXT = this.context;
+        const context = this.context;
 
-        CONTEXT.depthFunc (CONTEXT.LEQUAL);
-        CONTEXT.enable (CONTEXT.DEPTH_TEST);
+        context.depthFunc (context.LEQUAL);
+        context.enable (context.DEPTH_TEST);
     }
 
     DisableDepthTest ()
     {
-        const CONTEXT = this.context;
+        const context = this.context;
 
-        CONTEXT.disable (CONTEXT.DEPTH_TEST);
+        context.disable (context.DEPTH_TEST);
     }
 
-    Clear (isClearColor, isClearDepth, isClearStencil)
+    ClearColor ()
     {
-        const CONTEXT = this.context;
+        const context = this.context;
 
-        let mask = 0;
+        context.clear (context.COLOR_BUFFER_BIT);
+    }
 
-        if (isClearColor)
-        {
-            mask |= CONTEXT.COLOR_BUFFER_BIT;
-        }
+    ClearDepth ()
+    {
+        const context = this.context;
 
-        if (isClearDepth)
-        {
-            mask |= CONTEXT.DEPTH_BUFFER_BIT;
-        }
+        context.clear (context.DEPTH_BUFFER_BIT);
+    }
 
-        if (isClearStencil)
-        {
-            mask |= CONTEXT.STENCIL_BUFFER_BIT;
-        }
+    ClearStencil ()
+    {
+        const context = this.context;
 
-        CONTEXT.clear (mask);
+        context.clear (context.STENCIL_BUFFER_BIT);
+    }
+
+    ClearAll ()
+    {
+        const context = this.context;
+
+        context.clear (context.COLOR_BUFFER_BIT | context.DEPTH_BUFFER_BIT | context.STENCIL_BUFFER_BIT);
     }
     
     SetClearColor (red, green, blue, alpha)
     {
-        const CONTEXT = this.context;
+        if (Assert (typeof red === "number" && typeof green === "number" && 
+            typeof blue === "number" && typeof alpha === "number", 
+            "Color value must be a number.", "WebGL.SetClearColor"))
+        {
+            return;
+        }
 
-        CONTEXT.clearColor (red, green, blue, alpha);
+        const context = this.context;
+
+        context.clearColor (red, green, blue, alpha);
     }
     
     SetClearDepth (depth)
     {
-        const CONTEXT = this.context;
+        if (Assert (typeof depth === "number", "Depth value must be a number.", "WebGL.SetClearDepth"))
+        {
+            return;
+        }
 
-        CONTEXT.clearDepth (depth);
+        const context = this.context;
+
+        context.clearDepth (depth);
     }
 
     SetClearStencil (stencil)
     {
-        const CONTEXT = this.context;
+        if (Assert (typeof stencil === "number", "Stencil value must be a number.", "WebGL.SetClearStencil"))
+        {
+            return;
+        }
 
-        CONTEXT.clearStencil (stencil);
+        const context = this.context;
+
+        context.clearStencil (stencil);
     }
-}
-
-const BUFFER_TYPE = 
-{
-    Array : 1,
-    ElementArray : 2
-}
-
-const BUFFER_USAGE = 
-{
-    Static : 1,
-    Dynamic : 2
 }
 
 class Buffer
 {
-    constructor (context, type, usage)
+    constructor (context)
     {
+        Assert (context !== null, "Invalid WebGL rendering context.", "Buffer.constructor");
+        
         this.context = context;
         this.buffer = null;
-        this.type = type;
-        this.usage = usage;
     }
 
     Create ()
     {
-        const CONTEXT = this.context;
+        const context = this.context;
 
-        this.buffer = CONTEXT.createBuffer ();
+        this.buffer = context.createBuffer ();
     }
 
-    SetData (data)
+    SetData (data, type)
     {
-        const CONTEXT = this.context;
-        const BUFFER = this.buffer;
-        const TYPE = this.type;
-        const USAGE = this.usage;
-
-        let type;
-
-        if (TYPE === BUFFER_TYPE.Array)
+        if (Assert (data !== null || data !== undefined, "Invalid buffer data.", "Buffer.SetData"))
         {
-            type = CONTEXT.ARRAY_BUFFER;
-        }
-        else if (TYPE === BUFFER_TYPE.ElementArray)
-        {
-            type = CONTEXT.ELEMENT_ARRAY_BUFFER;
+            return;
         }
 
-        let usage;
+        const context = this.context;
+        const buffer = this.buffer;
 
-        if (USAGE === BUFFER_USAGE.Static)
+        context.bindBuffer (context.ARRAY_BUFFER, buffer);
+        context.bufferData (context.ARRAY_BUFFER, data, context.STATIC_DRAW);
+    }
+
+    SetIndexData (data)
+    {
+        if (Assert (data !== null || data !== undefined, "Invalid buffer data.", "Buffer.SetIndexData"))
         {
-            usage = CONTEXT.STATIC_DRAW;
-        }
-        else if (USAGE === BUFFER_USAGE.Dynamic)
-        {
-            usage = CONTEXT.DYNAMIC_DRAW;
+            return;
         }
 
-        CONTEXT.bindBuffer (type, BUFFER);
-        CONTEXT.bufferData (type, data, usage);
+        const context = this.context;
+        const buffer = this.buffer;
+
+        context.bindBuffer (context.ELEMENT_ARRAY_BUFFER, buffer);
+        context.bufferData (context.ELEMENT_ARRAY_BUFFER, data, context.STATIC_DRAW);
     }
 
     Delete ()
     {
-        const CONTEXT = this.context;
-        const BUFFER = this.buffer;
+        const context = this.context;
+        const buffer = this.buffer;
 
-        CONTEXT.deleteBuffer (BUFFER);
+        context.deleteBuffer (buffer);
 
+        this.context = null;
         this.buffer = null;
     }
 }
 
-const SHADER_TYPE = 
-{
+const ShaderType = Object.freeze ({
     Vertex : 1,
     Fragment : 2
-}
+});
 
-const UNIFORM_TYPE = 
-{
-    Vector4 : 1,
-    Matrix4: 2
-}
+const UniformVectorType = Object.freeze ({
+    SingleValue : 1,
+    Vector2 : 2,
+    Vector3 : 3,
+    Vector4 : 4
+});
+
+const UniformMatrixType = Object.freeze ({
+    Matrix2 : 1,
+    Matrix3 : 2,
+    Matrix4 : 3
+});
 
 class ShaderProgram
 {
     constructor (context)
     {
+        Assert (context !== null, "Invalid WebGL rendering context.", "ShaderProgram.constructor");
+
         this.context = context;
         this.program = null;
         this.vertexShader = null;
@@ -211,50 +242,50 @@ class ShaderProgram
 
     Init ()
     {
-        const CONTEXT = this.context;
+        const context = this.context;
 
-        this.program = CONTEXT.createProgram ();
-        this.vertexShader = CONTEXT.createShader (CONTEXT.VERTEX_SHADER);
-        this.createShader = CONTEXT.createShader (CONTEXT.FRAGMENT_SHADER);
+        this.program = context.createProgram ();
+        this.vertexShader = context.createShader (context.VERTEX_SHADER);
+        this.fragmentShader = context.createShader (context.FRAGMENT_SHADER);
     }
 
     Load (vertexShaderSource, fragmentShaderSource)
     {
-        const CONTEXT = this.context;
-        const PROGRAM = this.program;
-        const VERTEX_SHADER = this.vertexShader;
-        const FRAGMENT_SHADER = this.fragmentShader;
+        const context = this.context;
+        const program = this.program;
+        const vertexShader = this.vertexShader;
+        const fragmentShader = this.fragmentShader;
 
         // Compile
-        CONTEXT.shaderSource (VERTEX_SHADER, vertexShaderSource);
-        CONTEXT.compileShader (VERTEX_SHADER);
-    
-        const IS_VERTEX_COMPILE_FAILED = !CONTEXT.getShaderParameter (VERTEX_SHADER, CONTEXT.COMPILE_STATUS);
-    
-        if (IS_VERTEX_COMPILE_FAILED)
+        context.shaderSource (vertexShader, vertexShaderSource);
+        context.compileShader (vertexShader);
+
+        if (Assert (context.getShaderParameter (vertexShader, context.COMPILE_STATUS), "Compiling vertex shader is failed.", "ShaderProgram.Load"))
         {
+            console.log (context.getShaderInfoLog (vertexShader));
+
             return false;
         }
     
-        CONTEXT.shaderSource (FRAGMENT_SHADER, fragmentShaderSource);
-        CONTEXT.compileShader (FRAGMENT_SHADER);
+        context.shaderSource (fragmentShader, fragmentShaderSource);
+        context.compileShader (fragmentShader);
     
-        const IS_FRAGMENT_COMPILE_FAILED = !CONTEXT.getShaderParameter (FRAGMENT_SHADER, CONTEXT.COMPILE_STATUS);
-    
-        if (IS_FRAGMENT_COMPILE_FAILED)
+        if (Assert (context.getShaderParameter (fragmentShader, context.COMPILE_STATUS), "Compiling fragment shader is failed.", "ShaderProgram.Load"))
         {
+            console.log (context.getShaderInfoLog (fragmentShader));
+
             return false;
         }
     
         // Link
-        CONTEXT.attachShader (PROGRAM, VERTEX_SHADER);
-        CONTEXT.attachShader (PROGRAM, FRAGMENT_SHADER);
-        CONTEXT.linkProgram (PROGRAM);
-    
-        const IS_LINK_FAILED = !CONTEXT.getProgramParameter (PROGRAM, CONTEXT.LINK_STATUS);
-    
-        if (IS_LINK_FAILED)
+        context.attachShader (program, vertexShader);
+        context.attachShader (program, fragmentShader);
+        context.linkProgram (program);
+
+        if (Assert (context.getProgramParameter (program, context.LINK_STATUS), "Linking shader program is failed.", "ShaderProgram.Load"))
         {
+            console.log (context.getProgramInfoLog (program));
+
             return false;
         }
     
@@ -263,55 +294,132 @@ class ShaderProgram
 
     Delete ()
     {
-        const CONTEXT = this.context;
-        const PROGRAM = this.program;
-        const VERTEX_SHADER = this.vertexShader;
-        const FRAGMENT_SHADER = this.fragmentShader;
+        const context = this.context;
+        const program = this.program;
+        const vertexShader = this.vertexShader;
+        const fragmentShader = this.fragmentShader;
     
-        CONTEXT.detachShader (PROGRAM, VERTEX_SHADER);
-        CONTEXT.detachShader (PROGRAM, FRAGMENT_SHADER);
+        context.detachShader (program, vertexShader);
+        context.detachShader (program, fragmentShader);
     
-        CONTEXT.deleteShader (VERTEX_SHADER);
-        CONTEXT.deleteShader (PROGRAM, FRAGMENT_SHADER);
+        context.deleteShader (vertexShader);
+        context.deleteShader (fragmentShader);
     
-        CONTEXT.deleteProgram (PROGRAM);
+        context.deleteProgram (program);
     
+        this.context = null;
         this.program = null;
         this.vertexShader = null;
         this.fragmentShader = null;
     }
 
-    SetAttribute (name, buffer, elementSize)
+    SetAttribute (name, buffer, size, stride, offset)
     {
-        const CONTEXT = this.context;
-        const PROGRAM = this.program;
-        const ATTRIBUTE_LOCATION = CONTEXT.getAttribLocation (PROGRAM, name);
+        if (Assert (typeof name === "string", "Attribute name must be a string.", "ShaderProgram.SetAttribute") ||
+            Assert (buffer instanceof Buffer, "Buffer is invalid.", "ShaderProgram.SetAttribute") ||
+            Assert (typeof size === "number", "Size must be a number.", "ShaderProgram.SetAttribute") ||
+            Assert (typeof stride === "number", "Stride must be a number.") ||
+            Assert (typeof offset === "number", "Offset must be a number", "ShaderProgram.SetAttribute"))
+        {
+            return;
+        }
+
+        const context = this.context;
+        const program = this.program;
+
+        const attributeLocation = context.getAttribLocation (program, name);
+
+        if (Assert (attributeLocation !== -1, "Attribute \"" + name + "\" not found.", "ShaderProgram.SetAttribute"))
+        {
+            return;
+        }
     
-        CONTEXT.bindBuffer (CONTEXT.ARRAY_BUFFER, buffer.buffer);
-        CONTEXT.enableAttribArray (ATTRIBUTE_LOCATION);
-        CONTEXT.vertexAttribPointer (ATTRIBUTE_LOCATION, elementSize, CONTEXT.FLOAT, false, 0, 0);
+        context.bindBuffer (context.ARRAY_BUFFER, buffer.buffer);
+        context.vertexAttribPointer (attributeLocation, size, context.FLOAT, false, stride, offset);
+        context.enableVertexAttribArray (attributeLocation);
     }
 
-    SetUniform (name, data, type)
+    SetUniformVector (name, vector, type)
     {
-        const CONTEXT = this.context;
-        const PROGRAM = this.program;
-        const UNIFORM_LOCATION = CONTEXT.getUniformLocation (PROGRAM, name);
-    
-        switch (uniformType)
+        if (Assert (typeof name === "string", "Name must be a string.", "ShaderProgram.SetUniformVector") ||
+            Assert (vector instanceof Float32Array, "Vector must be an array of 32bit float (Float32Array).", "ShaderProgram.SetUniformVector") ||
+            Assert (typeof type === "number", "Type must be one of UniformVectorType.", "ShaderProgram.SetUiformVector"))
         {
-            case UNIFORM_TYPE.Vector4 :
+            return;
+        }
+
+        const context = this.context;
+        const uniformLocation = context.getUniformLocation (this.program, name);
+
+        if (Assert (uniformLocation !== null && uniformLocation !== undefined, "Uniform \"" + name + "\" Not Found", "ShaderProgram.SetUiformVector"))
+        {
+            return;
+        }
+
+        switch (type)
+        {
+            case UniformVectorType.SingleValue :
             {
-                CONTEXT.uniform4fv (UNIFORM_LOCATION, data);
-    
-                break;
+                context.uniform1fv (uniformLocation, vector);
+                return;
             }
-    
-            case UNIFORM_TYPE.Matrix4 :
+
+            case UniformVectorType.Vector2 :
             {
-                CONTEXT.uniformMatrix4fv (UNIFORM_LOCATION, false, data);
-    
-                break;
+                context.uniform2fv (uniformLocation, vector);
+                return;
+            }
+
+            case UniformVectorType.Vector3 :
+            {
+                context.uniform3fv (uniformLocation, vector);
+                return;
+            }
+
+            case UniformVectorType.Vector4 :
+            {
+                context.uniform4fv (uniformLocation, vector);
+                return;
+            }
+        }
+    }
+
+    SetUniformMatrix (name, matrix, type, transpose = false)
+    {
+        if (Assert (typeof name === "string", "Name must be a string.", "ShaderProgram.SetUniformMatrix") ||
+            Assert (matrix instanceof Float32Array, "Matrix must be an array of 32bit float (Float32Array).", "ShaderProgram.SetUniformMatrix") ||
+            Assert (typeof type === "number", "Type must be one of UniformMatrixType.", "ShaderProgram.SetUniformMatrix") ||
+            Assert (typeof transpose === "boolean", "Transpose must be a true or false.", "ShaderProgram.SetUniformMatrix"))
+        {
+            return;
+        }
+
+        const context = this.context;
+        const uniformLocation = context.getUniformLocation (this.program, name);
+
+        if (Assert (uniformLocation !== null && uniformLocation !== undefined, "Uniform \"" + name + "\" Not Found", "ShaderProgram.SetUniformMatrix"))
+        {
+            return;
+        }
+
+        switch (type)
+        {
+            case UniformMatrixType.Matrix2 :
+            {
+                context.uniformMatrix2fv (uniformLocation, transpose, matrix);
+                return;
+            }
+
+            case UniformMatrixType.Matrix3 :
+            {
+                context.uniformMatrix3fv (uniformLocation, transpose, matrix);
+                return;
+            }
+
+            case UniformMatrixType.Matrix4 :
+            {
+                context.uniformMatrix4fv (uniformLocation, transpose, matrix);
+                return;
             }
         }
     }
@@ -392,24 +500,22 @@ class GameEngine
     }
 }
 
-const RESOURCE_LOADING_STATUS = 
-{
-    Loading : 1,
-    Finish : 2
-}
+const ResourceLoadingStatus = Object.freeze ({
+    Loading : 1, 
+    Finish : 2 
+});
 
-const RESOURCE_TYPE = 
-{
+const ResourceType = Object.freeze ({
     ShaderSource : 1,
     MeshData : 2,
     Texture : 3
-}
+});
 
 class ResourceLoader
 {
     constructor ()
     {
-        this.status = RESOURCE_LOADING_STATUS.Finish;
+        this.status = ResourceLoadingStatus.Finish;
         this.loadingCount = 0;
         this.uriBase = "";
     }
@@ -421,7 +527,7 @@ class ResourceLoader
 
     Load (resourceName, resourceType)
     {
-        this.status = RESOURCE_LOADING_STATUS.Loading;
+        this.status = ResourceLoadingStatus.Loading;
         this.loadingCount++;
 
         let resourceURI = this.uriBase;
@@ -429,7 +535,7 @@ class ResourceLoader
 
         switch (resourceType)
         {
-            case RESOURCE_TYPE.ShaderSource :
+            case ResourceType.ShaderSource :
             {
                 resourceURI += "/shaders/" + resourceName;
                 responseType = "text";
@@ -437,7 +543,7 @@ class ResourceLoader
                 break;
             }
 
-            case RESOURCE_TYPE.MeshData :
+            case ResourceType.MeshData :
             {
                 resourceURI += "/meshes/" + resourceName;
                 responseType = "text";
@@ -445,7 +551,7 @@ class ResourceLoader
                 break;
             }
 
-            case RESOURCE_TYPE.Texture :
+            case ResourceType.Texture :
             {
                 resourceURI += "/textures/" + resourceName;
                 responseType = "arraybuffer";
@@ -471,7 +577,7 @@ class ResourceLoader
 
                 if (LOADER.loadingCount === 0)
                 {
-                    LOADER.status = RESOURCE_LOADING_STATUS.Finish;
+                    LOADER.status = ResourceLoadingStatus.Finish;
                 }
 
                 resolve (this.response);
@@ -498,18 +604,250 @@ class Mesh
 {
     constructor ()
     {
+        this.positionSize = 3;
+        this.normalSize = 3;
+        this.textureCoordinateSize = 2;
 
+        this.haveNormal = false;
+        this.haveTextureCoordinate = false;
+
+        this.faces = [];
     }
 
-    static ParseObj (obj)
+    GetVertexPosition (index)
     {
+        const OUT_OF_RANGE = index < 0 || index >= this.GetVertexCount ();
 
+        if (OUT_OF_RANGE)
+        {
+            return null;
+        }
+
+        const START = this.GetStride () * index;
+
+        const X = this.faces[START];
+        const Y = this.faces[START + 1];
+        const Z = this.faces[START + 2];
+
+        return Vector3.FromElements (X, Y, Z);
+    }
+
+    GetVertexNormal (index)
+    {
+        const OUT_OF_RANGE = index < 0 || index >= this.GetVertexCount ();
+        const NO_NORMAL = this.haveNormal === false;
+
+        if (OUT_OF_RANGE || NO_NORMAL)
+        {
+            return null;
+        }
+
+        const START = this.GetStride () * index + this.GetVertexNormalOffset ();
+
+        const X = this.faces[START];
+        const Y = this.faces[START + 1];
+        const Z = this.faces[START + 2];
+
+        return Vector3.FromElements (X, Y, Z);
+    }
+
+    GetTextureCoordinate (index)
+    {
+        const OUT_OF_RANGE = index < 0 || index >= this.GetVertexCount ();
+        const NO_TEXTURE_COORDINATE = this.haveTextureCoordinate === false;
+
+        if (OUT_OF_RANGE || NO_TEXTURE_COORDINATE)
+        {
+            return null;
+        }
+
+        const START = this.GetStride () * index + this.GetVertexTextureCoordinateOffset ();
+
+        const U = this.faces[START];
+        const V = this.faces[START + 1];
+
+        return Vector2.FromElements (U, V);
+    }
+
+    GetVertexPositionSize ()
+    {
+        return this.positionSize;
+    }
+
+    GetVertexNormalSize ()
+    {
+        return this.normalSize;
+    }
+
+    GetVertexTextureCoordinateSize ()
+    {
+        return this.textureCoordinateSize;
+    }
+
+    GetVertexPositionOffset ()
+    {
+        return 0;
+    }
+
+    GetVertexNormalOffset ()
+    {
+        const NO_NORMAL = this.haveNormal === false;
+
+        if (NO_NORMAL)
+        {
+            return null;
+        }
+
+        return this.positionSize * Float32Array.BYTES_PER_ELEMENT;
+    }
+
+    GetVertexTextureCoordinateOffset ()
+    {
+        const NO_TEXTURE_COORDINATE = this.haveTextureCoordinate === false;
+
+        if (NO_TEXTURE_COORDINATE)
+        {
+            return null;
+        }
+
+        return (this.positionSize + this.normalSize) * Float32Array.BYTES_PER_ELEMENT;
+    }
+
+    GetStride ()
+    {
+        let stride = this.positionSize;
+
+        if (this.haveNormal)
+        {
+            stride += this.normalSize;
+        }
+
+        if (this.haveTextureCoordinate)
+        {
+            stride += this.textureCoordinateSize;
+        }
+
+        return stride * Float32Array.BYTES_PER_ELEMENT;
+    }
+
+    GetVertexCount ()
+    {
+        return this.faces.length / this.GetStride () * Float32Array.BYTES_PER_ELEMENT;
+    }  
+}
+
+class ObjParser
+{
+    static Parse (obj)
+    {
+        const MESH = new Mesh ();
+
+        MESH.haveNormal = obj.includes ("vn");
+        MESH.haveTextureCoordinate = obj.includes ("vt");
+
+        const OBJ_INFOS = obj.split ("\n");
+
+        const POSITIONS = [];
+        const NORMALS = [];
+        const TEXTURE_COORDINATES = [];
+
+        for (const INFO of OBJ_INFOS)
+        {
+            const INFO_PARTS = INFO.trimRight ().split (" ");
+            const INFO_TYPE = INFO_PARTS[0];
+
+            switch (INFO_TYPE)
+            {
+                case "v" :
+                {
+                    POSITIONS.push (Vector3.FromElements (parseFloat (INFO_PARTS[1]),
+                                                          parseFloat (INFO_PARTS[2]),
+                                                          parseFloat (INFO_PARTS[3])));
+
+                    break;
+                }
+
+                case "vn" :
+                {
+                    NORMALS.push (Vector3.FromElements (parseFloat (INFO_PARTS[1]),
+                                                        parseFloat (INFO_PARTS[2]),
+                                                        parseFloat (INFO_PARTS[3])));
+
+                    break;
+                }
+
+                case "vt" :
+                {
+                    TEXTURE_COORDINATES.push (Vector3.FromElements (parseFloat (INFO_PARTS[1]),
+                                                                    parseFloat (INFO_PARTS[2])));
+
+                    break;
+                }
+
+                case "f" :
+                {
+                    const INDICES_1 = INFO_PARTS[1].split ("/");
+                    const INDICES_2 = INFO_PARTS[2].split ("/");
+                    const INDICES_3 = INFO_PARTS[3].split ("/");
+
+                    MESH.faces = MESH.faces.concat (POSITIONS[parseInt (INDICES_1[0]) - 1]);
+                    MESH.faces = MESH.faces.concat (NORMALS[parseInt (INDICES_1[2]) - 1]);
+                    MESH.faces = MESH.faces.concat (TEXTURE_COORDINATES[parseInt (INDICES_1[1]) - 1]);
+
+                    MESH.faces = MESH.faces.concat (POSITIONS[parseInt (INDICES_2[0]) - 1]);
+                    MESH.faces = MESH.faces.concat (NORMALS[parseInt (INDICES_2[2]) - 1]);
+                    MESH.faces = MESH.faces.concat (TEXTURE_COORDINATES[parseInt (INDICES_2[1]) - 1]);
+
+                    MESH.faces = MESH.faces.concat (POSITIONS[parseInt (INDICES_3[0]) - 1]);
+                    MESH.faces = MESH.faces.concat (NORMALS[parseInt (INDICES_3[2]) - 1]);
+                    MESH.faces = MESH.faces.concat (TEXTURE_COORDINATES[parseInt (INDICES_3[1]) - 1]);
+
+                    MESH.faces = MESH.faces.filter (value => { return value !== undefined && value !== null });
+
+                    break;
+                }
+            }
+        }
+
+        return MESH;
     }
 }
 
 /**************************
 *    Vector and Matrix    *
 **************************/
+
+class Vector2
+{
+    static FromElements (x, y)
+    {
+        return [x, y];
+    }
+
+    static Magnitude (vector)
+    {
+        const X_SQUARE = Math.pow (vector[0], 2);
+        const Y_SQUARE = Math.pow (vector[1], 2);
+
+        return Math.sqrt (X_SQUARE + Y_SQUARE);
+    }
+
+    static SquaredMagnitude (vector)
+    {
+        const X_SQUARE = Math.pow (vector[0], 2);
+        const Y_SQUARE = Math.pow (vector[1], 2);
+
+        return (X_SQUARE + Y_SQUARE);
+    }
+
+    static DotProduct (vectorA, vectorB)
+    {
+        const X_PRODUCT = vectorA[0] * vectorB[0];
+        const Y_PRODUCT = vectorA[1] * vectorB[1];
+
+        return (X_PRODUCT + Y_PRODUCT);
+    }
+}
 
 class Vector3
 {
@@ -623,6 +961,16 @@ class Matrix4
         ];
     }
 
+    static View (cameraPosition, cameraRotation)
+    {
+        let result = Matrix4.Translate (-cameraPosition[0], -cameraPosition[1], -cameraPosition[2]);
+        result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.RotateZ (-cameraRotation[2]));
+        result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.RotateY (-cameraRotation[1]));
+        result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.RotateX (-cameraRotation[0]));
+        
+        return result;
+    }
+
     static Projection (fov, width, height, near, far)
     {
         const ASPECT_RATIO = width / height;
@@ -635,6 +983,68 @@ class Matrix4
             0, Y_SCALE, 0, 0,
             0, 0, far / RANGE, 1,
             0, 0, -(near * far) / RANGE, 0
+        ];
+    }
+
+    static Translate (x, y, z)
+    {
+        return [
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            x, y, z, 1
+        ];
+    }
+
+    static RotateX (angle)
+    {
+        const ANGLE_IN_RADIANS = Angle.DegToRad (angle);
+        const COS_VAL = Math.cos (ANGLE_IN_RADIANS);
+        const SIN_VAL = Math.sin (ANGLE_IN_RADIANS);
+
+        return [
+            1, 0, 0, 0,
+            0, COS_VAL, SIN_VAL, 0,
+            0, -SIN_VAL, COS_VAL, 0,
+            0, 0, 0, 1
+        ];
+    }
+
+    static RotateY (angle)
+    {
+        const ANGLE_IN_RADIANS = Angle.DegToRad (angle);
+        const COS_VAL = Math.cos (ANGLE_IN_RADIANS);
+        const SIN_VAL = Math.sin (ANGLE_IN_RADIANS);
+
+        return [
+            COS_VAL, 0, -SIN_VAL, 0,
+            0, 1, 0, 0,
+            SIN_VAL, 0, COS_VAL, 0,
+            0, 0, 0, 1
+        ];
+    }
+
+    static RotateZ (angle)
+    {
+        const ANGLE_IN_RADIANS = Angle.DegToRad (angle);
+        const COS_VAL = Math.cos (ANGLE_IN_RADIANS);
+        const SIN_VAL = Math.sin (ANGLE_IN_RADIANS);
+
+        return [
+            COS_VAL, SIN_VAL, 0, 0,
+            -SIN_VAL, COS_VAL, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        ];
+    }
+
+    static Scale (scale)
+    {
+        return [
+            scale, 0, 0, 0,
+            0, scale, 0, 0,
+            0, 0, scale, 0,
+            0, 0, 0, 1
         ];
     }
 
@@ -684,4 +1094,45 @@ class Angle
     {
         return (180 / Math.PI) * radians;
     }
+}
+
+/******************
+*    Assertion    *
+******************/
+
+function Assert (condition, message, location = "")
+{
+    let title = "Assertion Failed in Assert" + (location === "" ? "" : " (Called from  " + location + ")");
+
+    if (typeof condition !== "boolean")
+    {
+        console.log (title + "\nCondition must be a boolean");
+
+        return true;
+    }
+
+    if (typeof message !== "string")
+    {
+        console.log ("Assertion Failed in Assert" + (location === "" ? "" : " (Called from  " + location + ")") + "\nMessage must be a string");
+
+        return true;
+    }
+
+    if (typeof location !== "string")
+    {
+        console.log ("Assertion Failed in Assert" + (location === "" ? "" : " (Called from  " + location + ")") + "\nLocation must be a string");
+
+        return true;
+    }
+
+    if (condition)
+    {
+        return false;
+    }
+
+    title = "Assertion Failed" + (location === "" ? "" : " in " + location);
+
+    console.log (title + "\n" + message);
+
+    return true;
 }
