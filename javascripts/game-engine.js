@@ -2,6 +2,11 @@
 *    WebGL    *
 **************/
 
+const WindingOrder = Object.freeze ({
+    Clockwise : 1,
+    CounterClockwise : 2
+});
+
 class WebGL
 {
     constructor ()
@@ -40,7 +45,7 @@ class WebGL
         return true;
     }
 
-    EnableCullingFrontFace ()
+    EnableFrontFaceCulling ()
     {
         const context = this.context;
 
@@ -48,7 +53,7 @@ class WebGL
         context.enable (context.CULL_FACE);
     }
 
-    EnableCullingBackFace ()
+    EnableBackFaceCulling ()
     {
         const context = this.context;
 
@@ -56,7 +61,7 @@ class WebGL
         context.enable (context.CULL_FACE);
     }
 
-    EnableCullingFrontAndBackFace ()
+    EnableFrontAndBackFaceCulling ()
     {
         const context = this.context;
 
@@ -64,7 +69,7 @@ class WebGL
         context.enable (context.CULL_FACE);
     }
 
-    DisableCullingFace ()
+    DisableFaceCulling ()
     {
         const context = this.context;
 
@@ -151,6 +156,69 @@ class WebGL
 
         context.clearStencil (stencil);
     }
+
+    UseShaderProgram (program)
+    {
+        if (Assert (program instanceof ShaderProgram, "Program must be a ShaderProgram.", "WebGL.UseShaderProgram"))
+        {
+            return;
+        }
+
+        this.context.useProgram (program.program);
+    }
+
+    SetWindingOrder (order)
+    {
+        if (Assert (typeof order === "number" && Object.values (WindingOrder).includes (order), "Order must be one of WindingOrder", "WebGL.SetWindingOrder"))
+        {
+            return;
+        }
+
+        const context = this.context;
+
+        switch (order)
+        {
+            case WindingOrder.Clockwise :
+            {
+                context.frontFace (context.CW);
+
+                return;
+            }
+
+            case WindingOrder.CounterClockwise :
+            {
+                context.frontFace (context.CCW);
+
+                return;
+            }
+        }
+    }
+
+    SetRenderSize (width, height)
+    {
+        if (Assert (typeof width === "number", "Width must be a number.", "WebGL.SetRenderSize") ||
+            Assert (typeof height === "number", "Height must be a number.", "WebGL.SetRenderSize"))
+        {
+            return;
+        }
+
+        const canvas = this.canvas;
+
+        canvas.width = width;
+        canvas.height = height;
+
+        this.context.viewport (0, 0, width, height);
+    }
+
+    GetCanvasWidth ()
+    {
+        return this.canvas.clientWidth;
+    }
+
+    GetCanvasHeight ()
+    {
+        return this.canvas.clientHeight;
+    }
 }
 
 class Buffer
@@ -170,7 +238,7 @@ class Buffer
         this.buffer = context.createBuffer ();
     }
 
-    SetData (data, type)
+    SetData (data)
     {
         if (Assert (data !== null || data !== undefined, "Invalid buffer data.", "Buffer.SetData"))
         {
@@ -343,7 +411,7 @@ class ShaderProgram
     {
         if (Assert (typeof name === "string", "Name must be a string.", "ShaderProgram.SetUniformVector") ||
             Assert (vector instanceof Float32Array, "Vector must be an array of 32bit float (Float32Array).", "ShaderProgram.SetUniformVector") ||
-            Assert (typeof type === "number", "Type must be one of UniformVectorType.", "ShaderProgram.SetUiformVector"))
+            Assert (typeof type === "number" && Object.values (UniformVectorType).includes (type), "Type must be one of UniformVectorType.", "ShaderProgram.SetUiformVector"))
         {
             return;
         }
@@ -388,7 +456,7 @@ class ShaderProgram
     {
         if (Assert (typeof name === "string", "Name must be a string.", "ShaderProgram.SetUniformMatrix") ||
             Assert (matrix instanceof Float32Array, "Matrix must be an array of 32bit float (Float32Array).", "ShaderProgram.SetUniformMatrix") ||
-            Assert (typeof type === "number", "Type must be one of UniformMatrixType.", "ShaderProgram.SetUniformMatrix") ||
+            Assert (typeof type === "number" && Object.values (UniformMatrixType).includes (type), "Type must be one of UniformMatrixType.", "ShaderProgram.SetUniformMatrix") ||
             Assert (typeof transpose === "boolean", "Transpose must be a true or false.", "ShaderProgram.SetUniformMatrix"))
         {
             return;
@@ -431,77 +499,124 @@ class ShaderProgram
 
 class GameEngine
 {
-    constructor (webgl, resourceLoader)
+    constructor ()
     {
-        this.webgl = webgl;
-        this.resourceLoader = resourceLoader;
+        this.webgl = null;
+        this.resource = null;
+        this.gameObjects = [];
+        this.firstLoop = true;
         this.previousTime = 0;
-        this.isFirstLoop = true;
-        this.isShutdown = false;
+        this.shutdown = false;
     }
 
     Init ()
     {
-        const WEBGL = this.webgl;
+        // WebGL
+        const webgl = new WebGL ();
 
-        WEBGL.Init ();
-        WEBGL.EnableDepthTest ();
-        WEBGL.EnableBackFaceCulling ();
+        if (webgl.Init ("webgl-canvas") === false)
+        {
+            console.log ("Initializing WebGL is failed.");
 
-        WEBGL.SetClearColor (0, 0, 0, 1);
-        WEBGL.SetClearDepth (1);
-        WEBGL.Clear (true, true, false);
+            return false;
+        }
+
+        this.webgl = webgl;
+
+        webgl.EnableBackFaceCulling ();
+        webgl.EnableDepthTest ();
+
+        webgl.SetClearColor (0.0, 0.0, 0.0, 1.0);
+        webgl.SetClearDepth (1.0);
+        webgl.SetClearStencil (0.0);
+
+        webgl.SetWindingOrder (WindingOrder.Clockwise);
+
+        this.resource = new Resource ();
+
+        return true;
     }
 
     Loop ()
     {   
-        const IS_CONTINUE_LOOP = !this.isShutdown;
+        const continueLoop = !this.shutdown;
 
-        if (IS_CONTINUE_LOOP)
+        if (continueLoop)
         {
-            const ENGINE = this;
+            const engine = this;
 
             requestAnimationFrame (function (time)
             {
-                const IS_FIRST_LOOP = ENGINE.isFirstLoop;
+                engine.Update (time);
+                engine.Render ();
 
-                if (IS_FIRST_LOOP)
-                {
-                    ENGINE.isFirstLoop = false;
-                    ENGINE.previousTime = time;
-                }
-
-                const PREVIOUS_TIME = ENGINE.previousTime;
-                const DELTA_TIME = (PREVIOUS_TIME - time) * 0.001;
-
-                ENGINE.Update (DELTA_TIME);
-                ENGINE.Render ();
-
-                ENGINE.previousTime = time;
-
-                ENGINE.Loop ();
+                engine.Loop ();
             });
         }
     }
 
-    Update (deltaTime)
+    Update (time)
     {
-        console.log (deltaTime);
+        if (this.firstLoop)
+        {
+            this.previousTime = time;
+            this.firstLoop = false;
+
+            for (const gameObject of this.gameObjects)
+            {
+                gameObject.Start ();
+            }
+        }
+
+        const deltaTime = (this.previousTime - time) * 0.001;
+
+        for (const gameObject of this.gameObjects)
+        {
+            gameObject.Update (deltaTime);
+        }
+
+        this.previousTime = time;
     }
 
     Render ()
     {
+        const webgl = this.webgl;
 
+        webgl.SetRenderSize (webgl.GetCanvasWidth (), webgl.GetCanvasHeight ());
+        webgl.ClearAll ();
+
+        for (const gameObject of this.gameObjects)
+        {
+            gameObject.Render (webgl);
+        }
+    }
+
+    AddGameObject (gameObject)
+    {
+        if (Assert (gameObject instanceof GameObject, "Game Object is invalid.", "GameEngine.AddGameObject"))
+        {
+            return;
+        }
+
+        gameObject.engine = this;
+        gameObject.Init ();
+
+        if (this.firstLoop === false)
+        {
+            gameObject.Start ();
+        }
+
+        this.gameObjects.push (gameObject);
     }
 
     Shutdown ()
     {
-        this.isShutdown = true;
+        this.shutdown = true;
     }
 }
 
-const ResourceLoadingStatus = Object.freeze ({
-    Loading : 1, 
+const ResourceStatus = Object.freeze ({
+    Fetch : 1, 
     Finish : 2 
 });
 
@@ -511,91 +626,110 @@ const ResourceType = Object.freeze ({
     Texture : 3
 });
 
-class ResourceLoader
+class Resource
 {
     constructor ()
     {
-        this.status = ResourceLoadingStatus.Finish;
-        this.loadingCount = 0;
+        this.status = ResourceStatus.Finish;
+        this.fetchCount = 0;
         this.uriBase = "";
+        this.resources = [];
     }
 
-    SetURIBase (uriBase)
+    SetUriBase (base)
     {
-        this.uriBase = uriBase;
+        if (Assert (typeof base === "string", "Base must be a string.", "Resource.SetUriBase"))
+        {
+            return;
+        }
+
+        this.uriBase = base;
     }
 
-    Load (resourceName, resourceType)
+    Fetch (name, location, type)
     {
-        this.status = ResourceLoadingStatus.Loading;
-        this.loadingCount++;
+        if (Assert (typeof name === "string", "Name must be a string.", "Resource.Fetch") ||
+            Assert (typeof location === "string", "Location must be a string.", "Resource.Fetch") ||
+            Assert (typeof type === "number" && Object.values (ResourceType).includes (type), "Type must be one of ResourceType", "Resource.Fetch"))
+        {
+            return;
+        }
 
-        let resourceURI = this.uriBase;
+        this.status = Resource.Fetch;
+        this.fetchCount += 1;
+
+        let uri = this.uriBase + "/" + location + "/" + name;
         let responseType;
 
-        switch (resourceType)
+        switch (type)
         {
             case ResourceType.ShaderSource :
-            {
-                resourceURI += "/shaders/" + resourceName;
-                responseType = "text";
-
-                break;
-            }
-
             case ResourceType.MeshData :
             {
-                resourceURI += "/meshes/" + resourceName;
                 responseType = "text";
-
                 break;
             }
 
             case ResourceType.Texture :
             {
-                resourceURI += "/textures/" + resourceName;
                 responseType = "arraybuffer";
-
                 break;
             }
         }
 
-        return this.MakeHTTPRequest (resourceURI, responseType);
+        return this.MakeHTTPRequest (uri, responseType, name);
     }
 
-    MakeHTTPRequest (uri, responseType)
+    Get (name)
     {
-        const LOADER = this;
+        if (Assert (typeof name === "string", "Name must be a string.", "Resource.Fetch"))
+        {
+            return;
+        }
+
+        if (Object.keys (this.resources).includes (name))
+        {
+            return this.resources[name];
+        }
+
+        return null;
+    }
+
+    MakeHTTPRequest (uri, responseType, name)
+    {
+        const resource = this;
 
         return new Promise (function (resolve, reject)
         {
-            const HTTP_REQUEST = new XMLHttpRequest ();
+            const httpRequest = new XMLHttpRequest ();
 
-            const WHEN_LOADING_SUCCESS = function (event)
+            const WhenSuccess = function (event)
             {
-                LOADER.loadingCount--;
+                resource.fetchCount--;
 
-                if (LOADER.loadingCount === 0)
+                if (resource.fetchCount === 0)
                 {
-                    LOADER.status = ResourceLoadingStatus.Finish;
+                    resource.status = ResourceStatus.Finish;
                 }
 
-                resolve (this.response);
+                resource.resources[name] = this.response;
+
+                resolve ();
             };
             
-            const WHEN_LOADING_FAIL = function (event)
+            const WhenFail = function (event)
             {
                 reject (new Error ("Failed to load resource."));
             };
 
-            HTTP_REQUEST.addEventListener ("load", WHEN_LOADING_SUCCESS);
-            HTTP_REQUEST.addEventListener ("abort", WHEN_LOADING_FAIL);
-            HTTP_REQUEST.addEventListener ("error", WHEN_LOADING_FAIL);
-            HTTP_REQUEST.addEventListener ("timeout", WHEN_LOADING_FAIL);
+            httpRequest.addEventListener ("load", WhenSuccess);
+            httpRequest.addEventListener ("abort", WhenFail);
+            httpRequest.addEventListener ("error", WhenFail);
+            httpRequest.addEventListener ("timeout", WhenFail);
 
-            HTTP_REQUEST.open ("GET", uri);
-            HTTP_REQUEST.responseType = responseType;
-            HTTP_REQUEST.send ();
+            httpRequest.open ("GET", uri);
+            httpRequest.responseType = responseType;
+            httpRequest.send ();
         });
     }
 }
@@ -814,6 +948,244 @@ class ObjParser
 }
 
 /**************************
+*    Game Frameworks    *
+**************************/
+
+class GameObject
+{
+    constructor ()
+    {
+        this.engine = null;
+        this.components = [];
+    }
+
+    Init ()
+    {
+        this.AddComponent (new Transform ());
+
+        for (const component of this.components)
+        {
+            component.Init ();
+        }
+    }
+
+    Start ()
+    {
+        for (const component of this.components)
+        {
+            component.Start ();
+        }
+    }
+
+    Update (deltaTime)
+    {
+        for (const component of this.components)
+        {
+            component.Update (deltaTime);
+        }
+    }
+
+    Render (webgl)
+    {
+        for (const component of this.components)
+        {
+            component.Render (webgl);
+        }
+    }
+
+    AddComponent (component)
+    {
+        if (Assert (component instanceof Component, "Component is invalid.", "GameObject.AddComponent"))
+        {
+            return;
+        }
+
+        component.SetGameObject (this);
+
+        if (this.engine !== null)
+        {
+            component.Init ();
+
+            if (this.engine.firstLoop === false)
+            {
+                component.Start ();
+            }
+        }
+
+        this.components.push (component);
+    }
+
+    GetComponentByName (name)
+    {
+        if (Assert (typeof name === "string", "Name must be a string.", "GameObject.GetComponentByName"))
+        {
+            return null;
+        }
+
+        for (const component of this.components)
+        {
+            if (component.constructor.name === name)
+            {
+                return component;
+            }
+        }
+
+        return null;
+    }
+}
+
+class Component
+{
+    constructor ()
+    {
+        this.gameObject = null;
+    }
+
+    Init ()
+    {
+    }
+
+    Start ()
+    {
+    }
+
+    Update (deltaTime)
+    {
+    }
+
+    Render (webgl)
+    {
+    }
+
+    SetGameObject (gameObject)
+    {
+        if (Assert (gameObject instanceof GameObject, "GameObject is invalid.", "Component.SetGameObject"))
+        {
+            return;
+        }
+
+        this.gameObject = gameObject;
+    }
+}
+
+class Transform extends Component
+{
+    constructor ()
+    {
+        super ();
+
+        this.position = [];
+        this.rotation = [];
+        this.scale = [];
+    }
+
+    Init ()
+    {
+        super.Init ();
+
+        this.position = Vector3.FromElements (0, 0, 0);
+        this.rotation = Vector3.FromElements (0, 0, 0);
+        this.scale = Vector3.FromElements (1, 1, 1);
+    }
+
+    GetPosition ()
+    {
+        return this.position;
+    }
+
+    SetPosition (x, y, z)
+    {
+        this.position = Vector3.FromElements (x, y, z);
+    }
+
+    GetRotation ()
+    {
+        return this.rotation;
+    }
+
+    SetRotation (x, y, z)
+    {
+        this.rotation = Vector3.FromElements (x, y, z);
+    }
+
+    GetScale ()
+    {
+        return this.scale;
+    }
+
+    SetScale (x, y, z)
+    {
+        this.scale = Vector3.FromElements (x, y, z);
+    }
+}
+
+class Renderer extends Component
+{
+    constructor()
+    {
+        super ();
+
+        this.mesh = null;
+        this.buffer = null;
+        this.shader = null;
+    }
+
+    Init ()
+    {
+        super.Init ();
+
+        this.buffer = new Buffer (this.gameObject.engine.webgl.context);
+        this.buffer.Create ();
+
+        this.shader = new ShaderProgram (this.gameObject.engine.webgl.context);
+        this.shader.Init ();
+    }
+
+    Render (webgl)
+    {
+        super.Render ();
+
+        if (this.mesh === null)
+        {
+            return;
+        }
+
+        const shader = this.shader;
+        const buffer = this.buffer;
+        const mesh = this.mesh;
+
+        shader.SetAttribute ("position", buffer, mesh.GetVertexPositionSize (), mesh.GetStride (), mesh.GetVertexPositionOffset ());
+        shader.SetAttribute ("normal", buffer, mesh.GetVertexNormalSize (), mesh.GetStride (), mesh.GetVertexNormalOffset ());
+
+        const transform = this.gameObject.GetComponentByName ("Transform");
+
+        const worldMatrix = Matrix4.World (transform.GetPosition(), transform.GetRotation ());
+        shader.SetUniformMatrix ("world", new Float32Array (worldMatrix), UniformMatrixType.Matrix4);
+        
+        const viewMatrix = Matrix4.View (Vector3.FromElements (0.0, 0.0, -5.0), Vector3.FromElements (0.0, 0.0, 0.0));
+        shader.SetUniformMatrix ("view", new Float32Array (viewMatrix), UniformMatrixType.Matrix4);
+
+        const projectionMatrix = Matrix4.Projection (Angle.DegToRad (60), webgl.GetCanvasWidth (), webgl.GetCanvasHeight (), 0.5, 100000);
+        shader.SetUniformMatrix ("projection", new Float32Array (projectionMatrix), UniformMatrixType.Matrix4);
+
+        webgl.UseShaderProgram (shader);
+
+        webgl.context.drawArrays (webgl.context.TRIANGLES, 0, mesh.GetVertexCount ());
+    }
+
+    SetMesh (meshData)
+    {
+        this.mesh = ObjParser.Parse (meshData);
+        this.buffer.SetData (new Float32Array (this.mesh.faces));
+    }
+
+    SetShader (vertSource, fragSource)
+    {
+        this.shader.Load (vertSource, fragSource);
+    }
+}
+
+/**************************
 *    Vector and Matrix    *
 **************************/
 
@@ -959,6 +1331,16 @@ class Matrix4
             0, 0, 1, 0,
             0, 0, 0, 1
         ];
+    }
+
+    static World (position, rotation)
+    {
+        let result = Matrix4.RotateZ (rotation[2]);
+        result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.RotateY (rotation[1]));
+        result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.RotateX (rotation[0]));
+        result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.Translate (position[0], position[1], position[2]));
+        
+        return result;
     }
 
     static View (cameraPosition, cameraRotation)
