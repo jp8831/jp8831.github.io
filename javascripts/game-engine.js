@@ -17,7 +17,7 @@ class WebGL
 
     Init (canvasId)
     {
-        if (Assert (typeof canvasId === "string", "Canvas id must be a string.", "WebGL.Init"))
+        if (Debug.AssertType (canvasId, String, "WebGL.Init"))
         {
             return false;
         }
@@ -25,7 +25,7 @@ class WebGL
         // Get canvas for WebGL by ID.
         const canvas = document.getElementById (canvasId);
 
-        if (Assert (canvas !== null, "Canvas id is wrong.", "WebGL.Init"))
+        if (Debug.AssertType (canvas, HTMLCanvasElement, "WebGL.Init"))
         {
             return false;
         }
@@ -35,7 +35,7 @@ class WebGL
         // Get WebGL context of canvas.
         const context = canvas.getContext ("webgl");
 
-        if (Assert (context !== null, "Getting WebGL rendering context is failed.", "WebGL.Init"))
+        if (Debug.AssertType (context, WebGLRenderingContext, "WebGL.Init"))
         {
             return false;
         }
@@ -121,9 +121,10 @@ class WebGL
     
     SetClearColor (red, green, blue, alpha)
     {
-        if (Assert (typeof red === "number" && typeof green === "number" && 
-            typeof blue === "number" && typeof alpha === "number", 
-            "Color value must be a number.", "WebGL.SetClearColor"))
+        if (Debug.AssertType (red, Number, "WebGL.SetClearColor") ||
+            Debug.AssertType (green, Number, "WebGL.SetClearColor") ||
+            Debug.AssertType (blue, Number, "WebGL.SetClearColor") ||
+            Debug.AssertType (alpha, Number, "WebGL.SetClearColor"))
         {
             return;
         }
@@ -135,7 +136,7 @@ class WebGL
     
     SetClearDepth (depth)
     {
-        if (Assert (typeof depth === "number", "Depth value must be a number.", "WebGL.SetClearDepth"))
+        if (Debug.AssertType (depth, Number, "WebGL.SetClearDepth"))
         {
             return;
         }
@@ -147,7 +148,7 @@ class WebGL
 
     SetClearStencil (stencil)
     {
-        if (Assert (typeof stencil === "number", "Stencil value must be a number.", "WebGL.SetClearStencil"))
+        if (Debug.AssertType (stencil, Number, "WebGL.SetClearStencil"))
         {
             return;
         }
@@ -159,7 +160,7 @@ class WebGL
 
     UseShaderProgram (program)
     {
-        if (Assert (program instanceof ShaderProgram, "Program must be a ShaderProgram.", "WebGL.UseShaderProgram"))
+        if (Debug.AssertType (program, ShaderProgram, "WebGL.UseShaderProgram"))
         {
             return;
         }
@@ -169,7 +170,8 @@ class WebGL
 
     SetWindingOrder (order)
     {
-        if (Assert (typeof order === "number" && Object.values (WindingOrder).includes (order), "Order must be one of WindingOrder", "WebGL.SetWindingOrder"))
+        if (Debug.AssertType (order, Number, "WebGL.SetWindingOrder") ||
+            Debug.Assert (Object.values (WindingOrder).includes (order), "Order must be one of WindingOrder", "WebGL.SetWindingOrder"))
         {
             return;
         }
@@ -196,8 +198,8 @@ class WebGL
 
     SetRenderSize (width, height)
     {
-        if (Assert (typeof width === "number", "Width must be a number.", "WebGL.SetRenderSize") ||
-            Assert (typeof height === "number", "Height must be a number.", "WebGL.SetRenderSize"))
+        if (Debug.AssertType (width, Number, "WebGL.SetRenderSize") ||
+            Debug.AssertType (height, Number, "WebGL.SetRenderSize"))
         {
             return;
         }
@@ -225,7 +227,7 @@ class Buffer
 {
     constructor (context)
     {
-        Assert (context !== null, "Invalid WebGL rendering context.", "Buffer.constructor");
+        Debug.AssertType (context, WebGLRenderingContext, "Buffer.constructor");
         
         this.context = context;
         this.buffer = null;
@@ -240,7 +242,7 @@ class Buffer
 
     SetData (data)
     {
-        if (Assert (data !== null || data !== undefined, "Invalid buffer data.", "Buffer.SetData"))
+        if (Debug.Assert (data !== null || data !== undefined, "Invalid buffer data.", "Buffer.SetData"))
         {
             return;
         }
@@ -254,7 +256,7 @@ class Buffer
 
     SetIndexData (data)
     {
-        if (Assert (data !== null || data !== undefined, "Invalid buffer data.", "Buffer.SetIndexData"))
+        if (Debug.Assert (data !== null || data !== undefined, "Invalid buffer data.", "Buffer.SetIndexData"))
         {
             return;
         }
@@ -300,7 +302,7 @@ class ShaderProgram
 {
     constructor (context)
     {
-        Assert (context !== null, "Invalid WebGL rendering context.", "ShaderProgram.constructor");
+        Debug.AssertType (context, WebGLRenderingContext, "ShaderProgram.constructor");
 
         this.context = context;
         this.program = null;
@@ -328,7 +330,7 @@ class ShaderProgram
         context.shaderSource (vertexShader, vertexShaderSource);
         context.compileShader (vertexShader);
 
-        if (Assert (context.getShaderParameter (vertexShader, context.COMPILE_STATUS), "Compiling vertex shader is failed.", "ShaderProgram.Load"))
+        if (Debug.Assert (context.getShaderParameter (vertexShader, context.COMPILE_STATUS), "Compiling vertex shader is failed.", "ShaderProgram.Load"))
         {
             console.log (context.getShaderInfoLog (vertexShader));
 
@@ -338,7 +340,7 @@ class ShaderProgram
         context.shaderSource (fragmentShader, fragmentShaderSource);
         context.compileShader (fragmentShader);
     
-        if (Assert (context.getShaderParameter (fragmentShader, context.COMPILE_STATUS), "Compiling fragment shader is failed.", "ShaderProgram.Load"))
+        if (Debug.Assert (context.getShaderParameter (fragmentShader, context.COMPILE_STATUS), "Compiling fragment shader is failed.", "ShaderProgram.Load"))
         {
             console.log (context.getShaderInfoLog (fragmentShader));
 
@@ -350,7 +352,7 @@ class ShaderProgram
         context.attachShader (program, fragmentShader);
         context.linkProgram (program);
 
-        if (Assert (context.getProgramParameter (program, context.LINK_STATUS), "Linking shader program is failed.", "ShaderProgram.Load"))
+        if (Debug.Assert (context.getProgramParameter (program, context.LINK_STATUS), "Linking shader program is failed.", "ShaderProgram.Load"))
         {
             console.log (context.getProgramInfoLog (program));
 
@@ -383,11 +385,11 @@ class ShaderProgram
 
     SetAttribute (name, buffer, size, stride, offset)
     {
-        if (Assert (typeof name === "string", "Attribute name must be a string.", "ShaderProgram.SetAttribute") ||
-            Assert (buffer instanceof Buffer, "Buffer is invalid.", "ShaderProgram.SetAttribute") ||
-            Assert (typeof size === "number", "Size must be a number.", "ShaderProgram.SetAttribute") ||
-            Assert (typeof stride === "number", "Stride must be a number.") ||
-            Assert (typeof offset === "number", "Offset must be a number", "ShaderProgram.SetAttribute"))
+        if (Debug.AssertType (name, String, "ShaderProgram.SetAttribute") ||
+            Debug.AssertType (buffer, Buffer, "ShaderProgram.SetAttribute") ||
+            Debug.AssertType (size, Number, "ShaderProgram.SetAttribute") ||
+            Debug.AssertType (stride, Number, "ShaderProgram.SetAttribute") ||
+            Debug.AssertType (offset, Number, "ShaderProgram.SetAttribute"))
         {
             return;
         }
@@ -397,7 +399,7 @@ class ShaderProgram
 
         const attributeLocation = context.getAttribLocation (program, name);
 
-        if (Assert (attributeLocation !== -1, "Attribute \"" + name + "\" not found.", "ShaderProgram.SetAttribute"))
+        if (Debug.Assert (attributeLocation !== -1, "Attribute \"" + name + "\" not found.", "ShaderProgram.SetAttribute"))
         {
             return;
         }
@@ -409,9 +411,10 @@ class ShaderProgram
 
     SetUniformVector (name, vector, type)
     {
-        if (Assert (typeof name === "string", "Name must be a string.", "ShaderProgram.SetUniformVector") ||
-            Assert (vector instanceof Float32Array, "Vector must be an array of 32bit float (Float32Array).", "ShaderProgram.SetUniformVector") ||
-            Assert (typeof type === "number" && Object.values (UniformVectorType).includes (type), "Type must be one of UniformVectorType.", "ShaderProgram.SetUiformVector"))
+        if (Debug.AssertType (name, String, "ShaderProgram.SetUniformVector") ||
+            Debug.AssertType (vector, Float32Array, "ShaderProgram.SetUniformVector") ||
+            Debug.AssertType (type, Nnumber, "ShaderProgram.SetUiformVector") ||
+            Debug.Assert (Object.values (UniformVectorType).includes (type), "Type must be one of UniformVectorType.", "ShaderProgram.SetUiformVector"))
         {
             return;
         }
@@ -419,7 +422,7 @@ class ShaderProgram
         const context = this.context;
         const uniformLocation = context.getUniformLocation (this.program, name);
 
-        if (Assert (uniformLocation !== null && uniformLocation !== undefined, "Uniform \"" + name + "\" Not Found", "ShaderProgram.SetUiformVector"))
+        if (Debug.Assert (uniformLocation !== null && uniformLocation !== undefined, "Uniform \"" + name + "\" Not Found", "ShaderProgram.SetUiformVector"))
         {
             return;
         }
@@ -454,10 +457,11 @@ class ShaderProgram
 
     SetUniformMatrix (name, matrix, type, transpose = false)
     {
-        if (Assert (typeof name === "string", "Name must be a string.", "ShaderProgram.SetUniformMatrix") ||
-            Assert (matrix instanceof Float32Array, "Matrix must be an array of 32bit float (Float32Array).", "ShaderProgram.SetUniformMatrix") ||
-            Assert (typeof type === "number" && Object.values (UniformMatrixType).includes (type), "Type must be one of UniformMatrixType.", "ShaderProgram.SetUniformMatrix") ||
-            Assert (typeof transpose === "boolean", "Transpose must be a true or false.", "ShaderProgram.SetUniformMatrix"))
+        if (Debug.AssertType (name, String, "ShaderProgram.SetUniformMatrix") ||
+            Debug.AssertType (matrix, Float32Array, "ShaderProgram.SetUniformMatrix") ||
+            Debug.AssertType (type, Number, "ShaderProgram.SetUniformMatrix") ||
+            Debug.Assert (Object.values (UniformMatrixType).includes (type), "Type must be one of UniformMatrixType.", "ShaderProgram.SetUniformMatrix") ||
+            Debug.AssertType (transpose, Boolean, "ShaderProgram.SetUniformMatrix"))
         {
             return;
         }
@@ -465,7 +469,7 @@ class ShaderProgram
         const context = this.context;
         const uniformLocation = context.getUniformLocation (this.program, name);
 
-        if (Assert (uniformLocation !== null && uniformLocation !== undefined, "Uniform \"" + name + "\" Not Found", "ShaderProgram.SetUniformMatrix"))
+        if (Debug.Assert (uniformLocation !== null && uniformLocation !== undefined, "Uniform \"" + name + "\" Not Found", "ShaderProgram.SetUniformMatrix"))
         {
             return;
         }
@@ -593,7 +597,7 @@ class GameEngine
 
     AddGameObject (gameObject)
     {
-        if (Assert (gameObject instanceof GameObject, "Game Object is invalid.", "GameEngine.AddGameObject"))
+        if (Debug.AssertType (gameObject, GameObject, "GameEngine.AddGameObject"))
         {
             return;
         }
@@ -638,7 +642,7 @@ class Resource
 
     SetUriBase (base)
     {
-        if (Assert (typeof base === "string", "Base must be a string.", "Resource.SetUriBase"))
+        if (Debug.AssertType (base, String, "Resource.SetUriBase"))
         {
             return;
         }
@@ -648,9 +652,10 @@ class Resource
 
     Fetch (name, location, type)
     {
-        if (Assert (typeof name === "string", "Name must be a string.", "Resource.Fetch") ||
-            Assert (typeof location === "string", "Location must be a string.", "Resource.Fetch") ||
-            Assert (typeof type === "number" && Object.values (ResourceType).includes (type), "Type must be one of ResourceType", "Resource.Fetch"))
+        if (Debug.AssertType (name, String, "Resource.Fetch") ||
+            Debug.AssertType (location, String, "Resource.Fetch") ||
+            Debug.AssertType (type, Number, "Resource.Fetch") ||
+            Debug.Assert (Object.values (ResourceType).includes (type), "Type must be one of ResourceType", "Resource.Fetch"))
         {
             return;
         }
@@ -682,7 +687,7 @@ class Resource
 
     Get (name)
     {
-        if (Assert (typeof name === "string", "Name must be a string.", "Resource.Fetch"))
+        if (Debug.AssertType (name, String, "Resource.Fetch"))
         {
             return;
         }
@@ -995,7 +1000,7 @@ class GameObject
 
     AddComponent (component)
     {
-        if (Assert (component instanceof Component, "Component is invalid.", "GameObject.AddComponent"))
+        if (Debug.Assert (component instanceof Component, "Invalid component.", "GameObject.AddComponent"))
         {
             return;
         }
@@ -1017,7 +1022,7 @@ class GameObject
 
     GetComponentByName (name)
     {
-        if (Assert (typeof name === "string", "Name must be a string.", "GameObject.GetComponentByName"))
+        if (Debug.AssertType (name, String, "GameObject.GetComponentByName"))
         {
             return null;
         }
@@ -1059,7 +1064,7 @@ class Component
 
     SetGameObject (gameObject)
     {
-        if (Assert (gameObject instanceof GameObject, "GameObject is invalid.", "Component.SetGameObject"))
+        if (Debug.AssertType (gameObject, GameObject, "Component.SetGameObject"))
         {
             return;
         }
@@ -1479,42 +1484,46 @@ class Angle
 }
 
 /******************
-*    Assertion    *
+*    Debugging    *
 ******************/
 
-function Assert (condition, message, location = "")
+class Debug
 {
-    let title = "Assertion Failed in Assert" + (location === "" ? "" : " (Called from  " + location + ")");
-
-    if (typeof condition !== "boolean")
+    static Assert (condition, message, location = "")
     {
-        console.log (title + "\nCondition must be a boolean");
+        if (Debug.AssertType (condition, Boolean, "Debug.Assert") ||
+            Debug.AssertType (message, String, "Debug.Assert") ||
+            Debug.AssertType (location, String, "Debug.Assert"))
+        {
+            return true;
+        }
+
+        if (condition)
+        {
+            return false;
+        }
+
+        let title = "Assertion Failed" + (location === "" ? "" : " in " + location);
+
+        console.warn (title + "\n" + message);
 
         return true;
     }
 
-    if (typeof message !== "string")
+    static AssertType (object, type, location = "")
     {
-        console.log ("Assertion Failed in Assert" + (location === "" ? "" : " (Called from  " + location + ")") + "\nMessage must be a string");
+        let objectType = object.constructor;
+
+        if (objectType === type)
+        {
+            return false;
+        }
+
+        let title = "Type Error" + (location === "" ? "" : " in " + location);
+        let message = "Object Type : " + objectType.name + "\nRequired Type : " + type.name;
+
+        console.warn (title + "\n" + message);
 
         return true;
     }
-
-    if (typeof location !== "string")
-    {
-        console.log ("Assertion Failed in Assert" + (location === "" ? "" : " (Called from  " + location + ")") + "\nLocation must be a string");
-
-        return true;
-    }
-
-    if (condition)
-    {
-        return false;
-    }
-
-    title = "Assertion Failed" + (location === "" ? "" : " in " + location);
-
-    console.log (title + "\n" + message);
-
-    return true;
 }
