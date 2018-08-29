@@ -7,6 +7,12 @@ const WindingOrder = Object.freeze ({
     CounterClockwise : 2
 });
 
+const FaceCullingMode = Object.freeze ({
+    Front : 1,
+    Back : 2,
+    FrontAndBack : 3
+});
+
 class WebGL
 {
     constructor ()
@@ -45,27 +51,40 @@ class WebGL
         return true;
     }
 
-    EnableFrontFaceCulling ()
+    EnableFaceCulling (mode)
     {
+        if (Debug.AssertType (mode, Number, "WebGL.EnableFaceCulling") ||
+            Debug.Assert (Object.values (FaceCullingMode).includes (mode), "mode must be a one of the FaceCullingMode", "WebGL.EnableFaceCulling"))
+        {
+            return;
+        }
+
         const context = this.context;
 
-        context.cullFace (context.FRONT);
-        context.enable (context.CULL_FACE);
-    }
+        switch (mode)
+        {
+            case FaceCullingMode.Front :
+            {
+                context.cullFace (context.FRONT);
 
-    EnableBackFaceCulling ()
-    {
-        const context = this.context;
+                break;
+            }
 
-        context.cullFace (context.BACK);
-        context.enable (context.CULL_FACE);
-    }
+            case FaceCullingMode.BACK :
+            {
+                context.cullFace (context.BACK);
 
-    EnableFrontAndBackFaceCulling ()
-    {
-        const context = this.context;
+                break;
+            }
 
-        context.cullFace (context.FRONT_AND_BACK);
+            case FaceCullingMode.FrontAndBack :
+            {
+                context.cullFace (context.FRONT_AND_BACK);
+
+                break;
+            }
+        }
+
         context.enable (context.CULL_FACE);
     }
 
@@ -395,9 +414,7 @@ class ShaderProgram
         }
 
         const context = this.context;
-        const program = this.program;
-
-        const attributeLocation = context.getAttribLocation (program, name);
+        const attributeLocation = context.getAttribLocation (this.program, name);
 
         if (Debug.Assert (attributeLocation !== -1, "Attribute \"" + name + "\" not found.", "ShaderProgram.SetAttribute"))
         {
@@ -527,7 +544,7 @@ class GameEngine
 
         this.webgl = webgl;
 
-        webgl.EnableBackFaceCulling ();
+        webgl.EnableFaceCulling (FaceCullingMode.Back);
         webgl.EnableDepthTest ();
 
         webgl.SetClearColor (0.0, 0.0, 0.0, 1.0);
@@ -1159,6 +1176,8 @@ class Renderer extends Component
         const buffer = this.buffer;
         const mesh = this.mesh;
 
+        webgl.UseShaderProgram (shader);
+
         shader.SetAttribute ("position", buffer, mesh.GetVertexPositionSize (), mesh.GetStride (), mesh.GetVertexPositionOffset ());
         shader.SetAttribute ("normal", buffer, mesh.GetVertexNormalSize (), mesh.GetStride (), mesh.GetVertexNormalOffset ());
 
@@ -1172,8 +1191,6 @@ class Renderer extends Component
 
         const projectionMatrix = Matrix4.Projection (Angle.DegToRad (60), webgl.GetCanvasWidth (), webgl.GetCanvasHeight (), 0.5, 100000);
         shader.SetUniformMatrix ("projection", new Float32Array (projectionMatrix), UniformMatrixType.Matrix4);
-
-        webgl.UseShaderProgram (shader);
 
         webgl.context.drawArrays (webgl.context.TRIANGLES, 0, mesh.GetVertexCount ());
     }
@@ -1505,7 +1522,8 @@ class Debug
 
         let title = "Assertion Failed" + (location === "" ? "" : " in " + location);
 
-        console.warn (title + "\n" + message);
+        console.log (title + "\n" + message);
+        console.trace ();
 
         return true;
     }
@@ -1522,7 +1540,8 @@ class Debug
         let title = "Type Error" + (location === "" ? "" : " in " + location);
         let message = "Object Type : " + objectType.name + "\nRequired Type : " + type.name;
 
-        console.warn (title + "\n" + message);
+        console.log (title + "\n" + message);
+        console.trace ();
 
         return true;
     }
