@@ -2,17 +2,6 @@
 *    WebGL    *
 **************/
 
-const WindingOrder = Object.freeze ({
-    Clockwise : 1,
-    CounterClockwise : 2
-});
-
-const FaceCullingMode = Object.freeze ({
-    Front : 1,
-    Back : 2,
-    FrontAndBack : 3
-});
-
 class WebGL
 {
     constructor ()
@@ -54,7 +43,7 @@ class WebGL
     EnableFaceCulling (mode)
     {
         if (Debug.AssertType (mode, Number, "WebGL.EnableFaceCulling") ||
-            Debug.Assert (Object.values (FaceCullingMode).includes (mode), "mode must be a one of the FaceCullingMode", "WebGL.EnableFaceCulling"))
+            Debug.Assert (Object.values (WebGL.EFaceCullingMode).includes (mode), "mode must be a one of the FaceCullingMode", "WebGL.EnableFaceCulling"))
         {
             return;
         }
@@ -63,21 +52,21 @@ class WebGL
 
         switch (mode)
         {
-            case FaceCullingMode.Front :
+            case WebGL.EFaceCullingMode.Front :
             {
                 context.cullFace (context.FRONT);
 
                 break;
             }
 
-            case FaceCullingMode.BACK :
+            case WebGL.EFaceCullingMode.BACK :
             {
                 context.cullFace (context.BACK);
 
                 break;
             }
 
-            case FaceCullingMode.FrontAndBack :
+            case WebGL.EFaceCullingMode.FrontAndBack :
             {
                 context.cullFace (context.FRONT_AND_BACK);
 
@@ -190,7 +179,7 @@ class WebGL
     SetWindingOrder (order)
     {
         if (Debug.AssertType (order, Number, "WebGL.SetWindingOrder") ||
-            Debug.Assert (Object.values (WindingOrder).includes (order), "Order must be one of WindingOrder", "WebGL.SetWindingOrder"))
+            Debug.Assert (Object.values (WebGL.EWindingOrder).includes (order), "Order must be one of WindingOrder", "WebGL.SetWindingOrder"))
         {
             return;
         }
@@ -199,14 +188,14 @@ class WebGL
 
         switch (order)
         {
-            case WindingOrder.Clockwise :
+            case WebGL.EWindingOrder.Clockwise :
             {
                 context.frontFace (context.CW);
 
                 return;
             }
 
-            case WindingOrder.CounterClockwise :
+            case WebGL.EWindingOrder.CounterClockwise :
             {
                 context.frontFace (context.CCW);
 
@@ -241,6 +230,17 @@ class WebGL
         return this.canvas.clientHeight;
     }
 }
+
+WebGL.EWindingOrder = Object.freeze ({
+    Clockwise : 1,
+    CounterClockwise : 2
+});
+
+WebGL.EFaceCullingMode = Object.freeze ({
+    Front : 1,
+    Back : 2,
+    FrontAndBack : 3
+});
 
 class Buffer
 {
@@ -298,24 +298,6 @@ class Buffer
         this.buffer = null;
     }
 }
-
-const ShaderType = Object.freeze ({
-    Vertex : 1,
-    Fragment : 2
-});
-
-const UniformVectorType = Object.freeze ({
-    SingleValue : 1,
-    Vector2 : 2,
-    Vector3 : 3,
-    Vector4 : 4
-});
-
-const UniformMatrixType = Object.freeze ({
-    Matrix2 : 1,
-    Matrix3 : 2,
-    Matrix4 : 3
-});
 
 class ShaderProgram
 {
@@ -431,7 +413,7 @@ class ShaderProgram
         if (Debug.AssertType (name, String, "ShaderProgram.SetUniformVector") ||
             Debug.AssertType (vector, Float32Array, "ShaderProgram.SetUniformVector") ||
             Debug.AssertType (type, Nnumber, "ShaderProgram.SetUiformVector") ||
-            Debug.Assert (Object.values (UniformVectorType).includes (type), "Type must be one of UniformVectorType.", "ShaderProgram.SetUiformVector"))
+            Debug.Assert (Object.values (ShaderProgram.EUniformVectorType).includes (type), "Type must be one of UniformVectorType.", "ShaderProgram.SetUiformVector"))
         {
             return;
         }
@@ -446,25 +428,25 @@ class ShaderProgram
 
         switch (type)
         {
-            case UniformVectorType.SingleValue :
+            case ShaderProgram.EUniformVectorType.SingleValue :
             {
                 context.uniform1fv (uniformLocation, vector);
                 return;
             }
 
-            case UniformVectorType.Vector2 :
+            case ShaderProgram.EUniformVectorType.Vector2 :
             {
                 context.uniform2fv (uniformLocation, vector);
                 return;
             }
 
-            case UniformVectorType.Vector3 :
+            case ShaderProgram.EUniformVectorType.Vector3 :
             {
                 context.uniform3fv (uniformLocation, vector);
                 return;
             }
 
-            case UniformVectorType.Vector4 :
+            case ShaderProgram.EUniformVectorType.Vector4 :
             {
                 context.uniform4fv (uniformLocation, vector);
                 return;
@@ -477,7 +459,7 @@ class ShaderProgram
         if (Debug.AssertType (name, String, "ShaderProgram.SetUniformMatrix") ||
             Debug.AssertType (matrix, Float32Array, "ShaderProgram.SetUniformMatrix") ||
             Debug.AssertType (type, Number, "ShaderProgram.SetUniformMatrix") ||
-            Debug.Assert (Object.values (UniformMatrixType).includes (type), "Type must be one of UniformMatrixType.", "ShaderProgram.SetUniformMatrix") ||
+            Debug.Assert (Object.values (ShaderProgram.EUniformMatrixType).includes (type), "Type must be one of UniformMatrixType.", "ShaderProgram.SetUniformMatrix") ||
             Debug.AssertType (transpose, Boolean, "ShaderProgram.SetUniformMatrix"))
         {
             return;
@@ -493,19 +475,19 @@ class ShaderProgram
 
         switch (type)
         {
-            case UniformMatrixType.Matrix2 :
+            case ShaderProgram.EUniformMatrixType.Matrix2 :
             {
                 context.uniformMatrix2fv (uniformLocation, transpose, matrix);
                 return;
             }
 
-            case UniformMatrixType.Matrix3 :
+            case ShaderProgram.EUniformMatrixType.Matrix3 :
             {
                 context.uniformMatrix3fv (uniformLocation, transpose, matrix);
                 return;
             }
 
-            case UniformMatrixType.Matrix4 :
+            case ShaderProgram.EUniformMatrixType.Matrix4 :
             {
                 context.uniformMatrix4fv (uniformLocation, transpose, matrix);
                 return;
@@ -513,6 +495,24 @@ class ShaderProgram
         }
     }
 }
+
+ShaderProgram.EShaderType = Object.freeze ({
+    Vertex : 1,
+    Fragment : 2
+});
+
+ShaderProgram.EUniformVectorType = Object.freeze ({
+    SingleValue : 1,
+    Vector2 : 2,
+    Vector3 : 3,
+    Vector4 : 4
+});
+
+ShaderProgram.EUniformMatrixType = Object.freeze ({
+    Matrix2 : 1,
+    Matrix3 : 2,
+    Matrix4 : 3
+});
 
 /********************
 *    Game Engine    *
@@ -544,14 +544,14 @@ class GameEngine
 
         this.webgl = webgl;
 
-        webgl.EnableFaceCulling (FaceCullingMode.Back);
+        webgl.EnableFaceCulling (WebGL.EFaceCullingMode.Back);
         webgl.EnableDepthTest ();
 
         webgl.SetClearColor (0.0, 0.0, 0.0, 1.0);
         webgl.SetClearDepth (1.0);
         webgl.SetClearStencil (0.0);
 
-        webgl.SetWindingOrder (WindingOrder.Clockwise);
+        webgl.SetWindingOrder (WebGL.EWindingOrder.Clockwise);
 
         this.resource = new Resource ();
 
@@ -589,7 +589,7 @@ class GameEngine
             }
         }
 
-        const deltaTime = (this.previousTime - time) * 0.001;
+        const deltaTime = (time - this.previousTime) * 0.001;
 
         for (const gameObject of this.gameObjects)
         {
@@ -636,22 +636,11 @@ class GameEngine
     }
 }
 
-const ResourceStatus = Object.freeze ({
-    Fetch : 1, 
-    Finish : 2 
-});
-
-const ResourceType = Object.freeze ({
-    ShaderSource : 1,
-    MeshData : 2,
-    Texture : 3
-});
-
 class Resource
 {
     constructor ()
     {
-        this.status = ResourceStatus.Finish;
+        this.status = Resource.ELoadStatus.Finish;
         this.fetchCount = 0;
         this.uriBase = "";
         this.resources = [];
@@ -672,7 +661,7 @@ class Resource
         if (Debug.AssertType (name, String, "Resource.Fetch") ||
             Debug.AssertType (location, String, "Resource.Fetch") ||
             Debug.AssertType (type, Number, "Resource.Fetch") ||
-            Debug.Assert (Object.values (ResourceType).includes (type), "Type must be one of ResourceType", "Resource.Fetch"))
+            Debug.Assert (Object.values (Resource.EResourceType).includes (type), "Type must be one of ResourceType", "Resource.Fetch"))
         {
             return;
         }
@@ -685,14 +674,14 @@ class Resource
 
         switch (type)
         {
-            case ResourceType.ShaderSource :
-            case ResourceType.MeshData :
+            case Resource.EResourceType.ShaderSource :
+            case Resource.EResourceType.MeshData :
             {
                 responseType = "text";
                 break;
             }
 
-            case ResourceType.Texture :
+            case Resource.EResourceType.Texture :
             {
                 responseType = "arraybuffer";
                 break;
@@ -731,7 +720,7 @@ class Resource
 
                 if (resource.fetchCount === 0)
                 {
-                    resource.status = ResourceStatus.Finish;
+                    resource.status = Resource.ELoadStatus.Finish;
                 }
 
                 resource.resources[name] = this.response;
@@ -755,6 +744,17 @@ class Resource
         });
     }
 }
+
+Resource.ELoadStatus = Object.freeze ({
+    Fetch : 1, 
+    Finish : 2 
+});
+
+Resource.EResourceType = Object.freeze ({
+    ShaderSource : 1,
+    MeshData : 2,
+    Texture : 3
+});
 
 class Mesh
 {
@@ -1184,13 +1184,13 @@ class Renderer extends Component
         const transform = this.gameObject.GetComponentByName ("Transform");
 
         const worldMatrix = Matrix4.World (transform.GetPosition(), transform.GetRotation ());
-        shader.SetUniformMatrix ("world", new Float32Array (worldMatrix), UniformMatrixType.Matrix4);
+        shader.SetUniformMatrix ("world", new Float32Array (worldMatrix), ShaderProgram.EUniformMatrixType.Matrix4);
         
         const viewMatrix = Matrix4.View (Vector3.FromElements (0.0, 0.0, -5.0), Vector3.FromElements (0.0, 0.0, 0.0));
-        shader.SetUniformMatrix ("view", new Float32Array (viewMatrix), UniformMatrixType.Matrix4);
+        shader.SetUniformMatrix ("view", new Float32Array (viewMatrix), ShaderProgram.EUniformMatrixType.Matrix4);
 
         const projectionMatrix = Matrix4.Projection (Angle.DegToRad (60), webgl.GetCanvasWidth (), webgl.GetCanvasHeight (), 0.5, 100000);
-        shader.SetUniformMatrix ("projection", new Float32Array (projectionMatrix), UniformMatrixType.Matrix4);
+        shader.SetUniformMatrix ("projection", new Float32Array (projectionMatrix), ShaderProgram.EUniformMatrixType.Matrix4);
 
         webgl.context.drawArrays (webgl.context.TRIANGLES, 0, mesh.GetVertexCount ());
     }

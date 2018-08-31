@@ -5,9 +5,9 @@ async function RunDemo ()
     engine.Init ();
 
     engine.resource.SetUriBase ("https://jp8831.github.io");
-    await engine.resource.Fetch ("monkey.obj", "meshes", ResourceType.MeshData);
-    await engine.resource.Fetch ("vertex.glsl", "shaders", ResourceType.ShaderSource);
-    await engine.resource.Fetch ("fragment.glsl", "shaders", ResourceType.ShaderSource);
+    await engine.resource.Fetch ("monkey.obj", "meshes", Resource.EResourceType.MeshData);
+    await engine.resource.Fetch ("vertex.glsl", "shaders", Resource.EResourceType.ShaderSource);
+    await engine.resource.Fetch ("fragment.glsl", "shaders", Resource.EResourceType.ShaderSource);
 
     const monkey = new GameObject ();
     monkey.AddComponent (new Renderer ());
