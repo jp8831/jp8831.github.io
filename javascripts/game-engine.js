@@ -1183,7 +1183,7 @@ class Renderer extends Component
 
         const transform = this.gameObject.GetComponentByName ("Transform");
 
-        const worldMatrix = Matrix4.World (transform.GetPosition(), transform.GetRotation ());
+        const worldMatrix = Matrix4.World (transform.GetPosition(), transform.GetRotation (), transform.GetScale ());
         shader.SetUniformMatrix ("world", new Float32Array (worldMatrix), ShaderProgram.EUniformMatrixType.Matrix4);
         
         const viewMatrix = Matrix4.View (Vector3.FromElements (0.0, 0.0, -5.0), Vector3.FromElements (0.0, 0.0, 0.0));
@@ -1355,11 +1355,12 @@ class Matrix4
         ];
     }
 
-    static World (position, rotation)
+    static World (position, rotation, scale)
     {
-        let result = Matrix4.RotateZ (rotation[2]);
-        result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.RotateY (rotation[1]));
+        let result = Matrix4.Scale (scale[0], scale[1], scale[2]);
         result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.RotateX (rotation[0]));
+        result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.RotateY (rotation[1]));
+        result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.RotateZ (rotation[2]));
         result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.Translate (position[0], position[1], position[2]));
         
         return result;
@@ -1368,9 +1369,9 @@ class Matrix4
     static View (cameraPosition, cameraRotation)
     {
         let result = Matrix4.Translate (-cameraPosition[0], -cameraPosition[1], -cameraPosition[2]);
-        result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.RotateZ (-cameraRotation[2]));
-        result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.RotateY (-cameraRotation[1]));
         result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.RotateX (-cameraRotation[0]));
+        result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.RotateY (-cameraRotation[1]));
+        result = Matrix4.MultiplyMatrix4Matrix4 (result, Matrix4.RotateZ (-cameraRotation[2]));
         
         return result;
     }
@@ -1442,12 +1443,12 @@ class Matrix4
         ];
     }
 
-    static Scale (scale)
+    static Scale (x, y, z)
     {
         return [
-            scale, 0, 0, 0,
-            0, scale, 0, 0,
-            0, 0, scale, 0,
+            x, 0, 0, 0,
+            0, y, 0, 0,
+            0, 0, z, 0,
             0, 0, 0, 1
         ];
     }
