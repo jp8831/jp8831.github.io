@@ -1,5 +1,7 @@
 async function RunDemo ()
 {
+    Debug.Enable ();
+    
     const engine = new GameEngine ();
 
     engine.Init ();
