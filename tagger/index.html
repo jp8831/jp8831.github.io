@@ -33,15 +33,15 @@
 
                 <!--Tag Buttons-->
                 <div class="col">
-                    <div class="row no-gutters">
+                    <div class="row py-2 no-gutters">
                         <h3>등장인물의 감정</h3>
 
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-success" style="width : 100%;" onclick="ClickEmotionButton ('character_emotion', 'happy')">기쁨</button>
                             <button type="button" class="btn btn-success" style="width : 100%;" onclick="ClickEmotionButton ('character_emotion', 'anticipation')">기대</button>
                             <button type="button" class="btn btn-success" style="width : 100%;" onclick="ClickEmotionButton ('character_emotion', 'trust')">신뢰</button>
-                            <button type="button" class="btn btn-warning" style="width : 100%;" onclick="ClickEmotionButton ('character_emotion', 'sad')">슬픔</button>
                             <button type="button" class="btn btn-warning" style="width : 100%;" onclick="ClickEmotionButton ('character_emotion', 'surprise')">놀람</button>
+                            <button type="button" class="btn btn-danger" style="width : 100%;" onclick="ClickEmotionButton ('character_emotion', 'sad')">슬픔</button>
                             <button type="button" class="btn btn-danger" style="width : 100%;" onclick="ClickEmotionButton ('character_emotion', 'anger')">분노</button>
                             <button type="button" class="btn btn-danger" style="width : 100%;" onclick="ClickEmotionButton ('character_emotion', 'disgust')">혐오</button>
                             <button type="button" class="btn btn-danger" style="width : 100%;" onclick="ClickEmotionButton ('character_emotion', 'fear')">공포</button>
@@ -49,15 +49,15 @@
                         </div>
                     </div>
                 
-                    <div class="row no-gutters">
+                    <div class="row py-2 no-gutters">
                         <h3>보는사람의 감정</h3>
 
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-success" style="width : 100%;" onclick="ClickEmotionButton ('viewer_emotion', 'happy')">기쁨</button>
                             <button type="button" class="btn btn-success" style="width : 100%;" onclick="ClickEmotionButton ('viewer_emotion', 'anticipation')">기대</button>
                             <button type="button" class="btn btn-success" style="width : 100%;" onclick="ClickEmotionButton ('viewer_emotion', 'trust')">신뢰</button>
-                            <button type="button" class="btn btn-warning" style="width : 100%;" onclick="ClickEmotionButton ('viewer_emotion', 'sad')">슬픔</button>
                             <button type="button" class="btn btn-warning" style="width : 100%;" onclick="ClickEmotionButton ('viewer_emotion', 'surprise')">놀람</button>
+                            <button type="button" class="btn btn-danger" style="width : 100%;" onclick="ClickEmotionButton ('viewer_emotion', 'sad')">슬픔</button>
                             <button type="button" class="btn btn-danger" style="width : 100%;" onclick="ClickEmotionButton ('viewer_emotion', 'anger')">분노</button>
                             <button type="button" class="btn btn-danger" style="width : 100%;" onclick="ClickEmotionButton ('viewer_emotion', 'disgust')">혐오</button>
                             <button type="button" class="btn btn-danger" style="width : 100%;" onclick="ClickEmotionButton ('viewer_emotion', 'fear')">공포</button>
@@ -75,13 +75,13 @@
 
                 <!--Video-->
                 <form class="form-inline">
-                    <button id="read-video-button" class="btn btn-dark m-1" type="button">동영상 선택</button>
+                    <button id="read-video-button" class="btn btn-dark mx-1" type="button">동영상 선택</button>
                     <input id="video-file-name" class="form-control" type="text" placeholder="선택된 동영상이 없습니다." readonly>
                 </form>
 
                 <!--Subtitles-->
                 <form class="form-inline">
-                    <button id="read-subtitles-button" class="btn btn-dark m-1" type="button">자막 선택</button>
+                    <button id="read-subtitles-button" class="btn btn-dark mx-1" type="button">자막 선택</button>
                     <input id="subtitles-file-name" class="form-control" type="text" placeholder="선택된 자막이 없습니다." readonly>
                 </form>
 

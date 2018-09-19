@@ -147,12 +147,11 @@ function ParseVTT (text)
     // Filter cue has invalid text
     parsed = parsed.filter (cue => cue[1] && (cue[1] !== "&nbsp;"));
 
-    // Convert time text to number
     parsed.forEach(cue => {
-        // Split start time and end time
-        let splits = cue[0].split ("-->");
-        // Convert text to seconds
-        cue[0] = splits.map (text => Text2Seconds (text));
+        // Convert time text to seconds
+        cue[0] = cue[0].split ("-->").map (text => Text2Seconds (text));
+        // Remove ',' in text
+        cue[1] = cue[1].replace (/,/g, "");
     });
 
     let result = [];
