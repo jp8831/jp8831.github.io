@@ -1,3 +1,301 @@
+/**********
+* Classes *
+**********/
+
+class Dataset
+{
+    constructor ()
+    {
+        this.categories = [];
+        this.list = [];
+    }
+
+    Push ()
+    {
+        if (arguments.length <= 0)
+        {
+            throw "No element to add.";
+        }
+
+        if (arguments.length > this.categories.length)
+        {
+            throw "Elements are more than categories.";
+        }
+
+        let element = {};
+
+        for (let i = 0; i < arguments.length; i++)
+        {
+            element[this.categories[i]] = arguments[i];
+        }
+
+        this.list.push (element);
+    }
+    
+    Pop ()
+    {
+        if (this.list.length <= 0)
+        {
+            return null;
+        }
+
+        return this.list.pop ();
+    }
+
+    Count ()
+    {
+        return this.list.length;
+    }
+
+    At (index)
+    {
+        if (index < 0 || index >= this.list.length)
+        {
+            throw "Index is out of range.";
+        }
+
+        return this.list[index];
+    }
+
+    PushCategory (category)
+    {
+        if (category in this.categories)
+        {
+            throw "Category is already exists.";
+        }
+
+        this.categories.push (category);
+    }
+
+    RemoveCategory (category)
+    {
+        if (!(category in this.categories))
+        {
+            throw "Category is not exists.";
+        }
+
+        this.categories.splice (this.categories.indexOf (category));
+
+        for (let element of this.list)
+        {
+            delete element[category];
+        }
+    }
+
+    CountCategories ()
+    {
+        return this.categories.count;
+    }
+
+    Select ()
+    {}
+
+    Filter ()
+    {}
+
+    ToCSV ()
+    {
+        let csv = this.categories.join (",") + "\n";
+
+        for (let element of this.list)
+        {
+            for (let category of this.categories)
+            {
+                if (this.categories.indexOf (category) > 0)
+                {
+                    csv += ",";
+                }
+
+                csv += (!element[category] ? "" : element[category]);
+            }
+
+            csv += "\n";
+        }
+
+        return csv;
+    }
+}
+
+class BootstrapTable
+{
+    constructor ()
+    {
+        this.id;
+        this.headers = [];
+    }
+
+    Show (dataset, preprocessings)
+    {
+        let header = this.GetTableHeader ();
+        let headerRow = header.querySelector ("tr");
+
+        if (!headerRow)
+        {
+            headerRow = document.createElement ("tr");
+            header.appendChild (headerRow);
+        }
+
+        this.headers = dataset.categories;
+
+        for (let name of this.headers)
+        {
+            let node = document.createElement ("th");
+            node.setAttribute ("scope", "col");
+            node.innerHTML = Capitalize (name);
+
+            headerRow.appendChild (node);
+        }
+
+        let body = this.GetTableBody ();
+
+        for (let element of dataset.list)
+        {
+            let rowNode = document.createElement ("tr");
+
+            for (let name of this.headers)
+            {
+                let node = document.createElement ("td");
+
+                if (name in element)
+                {
+                    let value = element[name];
+                    let preprocessing = preprocessings[name];
+
+                    node.innerHTML = !value ? "" : (!preprocessing ? value : preprocessing (value)); 
+                }
+
+                rowNode.appendChild (node);
+            }
+
+            body.appendChild (rowNode);
+        }
+    }
+
+    AddEventListenerAt (index, header, eventName, listener)
+    {
+        if (!header in this.headers)
+        {
+            throw "No such header \"{}\"".format (header);
+        }
+
+        let rows = this.GetTableBody ().querySelectorAll ("tr");
+
+        if (index >= rows.length || rows.length <= 0)
+        {
+            throw "Index is out of range.";
+        }
+
+        let target = rows[index].querySelectorAll ("td")[this.headers.indexOf (header)];
+        target.addEventListener (eventName, listener);
+    }
+
+    Change (index, header, value)
+    {
+        if (!header in this.headers)
+        {
+            throw "Header not exists.";
+        }
+
+        let contents = this.GetTableBody ().querySelectorAll ("tr");
+
+        if (contents.length <= 0)
+        {
+            return;
+        }
+
+        contents[index].childNodes[this.headers.indexOf (header)].innerHTML = value;
+    }
+
+    ClearTable ()
+    {
+        if (this.header)
+        {
+            while (this.header.firstChild)
+            {
+                this.header.removeChild (this.header.firstChild);
+            }
+        }
+
+        if (this.body)
+        {
+            while (this.body.firstChild)
+            {
+                this.body.removeChild (this.body.firstChild);
+            }
+        }
+    }
+
+    SetTableId (id)
+    {
+        if (this.id)
+        {
+            throw "Table id is already assigned.";
+        }
+
+        this.id = id;
+        this.table = document.getElementById (id);
+
+        if (!this.table)
+        {
+            throw "Getting table is failed.";
+        }
+    }
+
+    GetTableHeader ()
+    {
+        if (!this.table)
+        {
+            throw "No table";
+        }
+
+        if (!this.header)
+        {
+            let header = this.table.querySelector ("thead");
+
+            if (!header)
+            {
+                header = document.createElement ("thead");
+                this.table.appendChild (header);
+            }
+
+            this.header = header;
+        }
+
+        return this.header;
+    }
+
+    GetTableBody ()
+    {
+        if (!this.table)
+        {
+            throw "No table";
+        }
+
+        if (!this.body)
+        {
+            let body = this.table.querySelector ("tbody");
+
+            if (!body)
+            {
+                body = document.createElement ("tbody");
+                this.table.appendChild (body);
+            }
+
+            this.body = body;
+        }
+
+        return this.body;
+    }
+}
+
+class Tagger
+{
+    constructor ()
+    {
+        
+    }
+}
+
 /*******************
 * Global Variables *
 *******************/
@@ -5,12 +303,9 @@
 var loadedVideos = {};
 var loadedSubtitles = {};
 
-var taggedData = {
-    "time" : [],
-    "text" : [],
-    "character_emotion" : [],
-    "viewer_emotion" : []
-};
+var dataset = new Dataset ();
+var table = new BootstrapTable ();
+
 
 /*********
 * Events *
@@ -25,6 +320,8 @@ window.onload = function ()
     document.getElementById ("subtitles-file-input").addEventListener ("change", ChangeSubtitlesFileInput);
 
     document.getElementById ("save-csv-button").addEventListener ("click", ClickSaveCSVButton);
+
+    table.SetTableId ("data-table");
 };
 
 function ClickReadVideoButton ()
@@ -63,24 +360,26 @@ function ChangeSubtitlesFileInput (fileInput)
         let video = document.getElementById ("video-play");
         let track = video.addTextTrack ("subtitles", "Subtitles");
 
-        taggedData["time"] = [];
-        taggedData["text"] = [];
-        taggedData["character_emotion"] = [];
-        taggedData["viewer_emotion"] = [];
+        dataset = new Dataset ();
+        dataset.PushCategory ("time");
+        dataset.PushCategory ("text");
+        dataset.PushCategory ("character_emotion");
+        dataset.PushCategory ("viewer_emotion");
 
-        for (cue of vtt)
+        for (let cue of vtt)
         {
-            taggedData["time"].push (cue["start_time"]);
-            taggedData["text"].push (cue["text"]);
-            taggedData["character_emotion"].push (null);
-            taggedData["viewer_emotion"].push (null);
-
+            dataset.Push (cue["start_time"], cue["text"]);
             track.addCue (new VTTCue (cue["start_time"], cue["end_time"], cue["text"]));
         }
 
         track.mode = "showing";
 
-        DisplayData (taggedData);
+        table.ClearTable ();
+        table.Show (dataset, { "time" : Seconds2Text});
+        dataset.list.forEach ((value, index) => {
+            let whenClick = function () { document.getElementById ("video-play").currentTime = value["time"] };
+            table.AddEventListenerAt (index, "text", "click", whenClick);
+        });
     };
 
     reader.readAsText (file);
@@ -95,19 +394,28 @@ function ClickEmotionButton (category, emotion)
         return;
     }
 
-    let active = video.textTracks[0].activeCues[0];
+    let trackCount = video.textTracks.length;
+    let lastTrack = video.textTracks[trackCount - 1];
+
+    if (trackCount > 1)
+    {
+        let prevTrack = video.textTracks[trackCount - 2];
+        prevTrack.mode = "disabled";
+    }
+    
+    let active = lastTrack.activeCues[0];
     
     if (!active)
     {
         return;
     }
 
-    for (let i = 0; i < taggedData["text"].length; i++)
+    for (let i = 0; i < dataset.Count (); i++)
     {
-        if (taggedData["text"][i] === active.text)
+        if (dataset.At (i)["text"] === active.text)
         {
-            taggedData[category][i] = emotion;
-            DisplayData (taggedData);
+            dataset.At (i)[category] = emotion;
+            table.Change (i, category, emotion);
             
             break;
         }
@@ -116,7 +424,7 @@ function ClickEmotionButton (category, emotion)
 
 function ClickSaveCSVButton ()
 {
-    let csv = ToCSV (taggedData);
+    let csv = dataset.ToCSV ();
 
     let link = document.getElementById ("csv-file-download");
     link.setAttribute ("href", encodeURI ("data:text/csv;charset=utf-8," + csv));
@@ -163,7 +471,7 @@ function ParseVTT (text)
         // Split text by character
         let splits = cue[1].split ('-').filter (text => text);
 
-        for (split of splits)
+        for (let split of splits)
         {
             result.push ({"start_time" : startTime, "end_time" : endTime, "text" : split});
         }
