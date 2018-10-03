@@ -141,7 +141,7 @@ class BootstrapTable
         {
             let node = document.createElement ("th");
             node.setAttribute ("scope", "col");
-            node.innerHTML = Capitalize (name);
+            node.innerHTML = name;
 
             headerRow.appendChild (node);
         }
@@ -292,7 +292,86 @@ class Tagger
 {
     constructor ()
     {
-        
+        this.categories = this.GetDefaultCategories ();
+        this.view = null;
+    }
+
+    UpdateView ()
+    {
+        if (!this.view)
+        {
+            throw "View is not assigned.";
+        }
+
+        while (this.view.firstChild)
+        {
+            this.view.removeChild (this.view.firstChild);
+        }
+
+        for (let categoryName in this.categories)
+        {
+            let row = document.createElement ("div");
+            row.setAttribute ("class", "row py-2 no-gutters");
+            row.style.maxWidth = "100%";
+            
+            this.view.appendChild (row);
+
+            let header = document.createElement ("h3");
+            header.setAttribute ("class", "col-12");
+            header.innerHTML = categoryName;
+
+            row.appendChild (header);
+
+            let group = document.createElement ("div");
+            group.setAttribute ("class", "btn-group btn-group-sm");
+            group.setAttribute ("role", "group");
+
+            row.appendChild (group);
+
+            for (let info of this.categories[categoryName])
+            {
+                let button = document.createElement ("button");
+                button.setAttribute ("type", "button");
+                button.setAttribute ("class", "btn");
+                button.innerHTML = info["element"];
+                button.style.color = "white";
+                button.style.backgroundColor = info["color"];
+                button.onclick = function () { ClickEmotionButton (categoryName, info["element"]); };
+
+                group.appendChild (button);
+            }
+        }
+    }
+
+    AddCategory ()
+    {
+        throw "Not implemented.";
+    }
+
+    RemoveCategory ()
+    {
+        throw "Not implemented.";
+    }
+
+    EditCategory ()
+    {
+        throw "Not implemented.";
+    }
+
+    GetDefaultCategories ()
+    {
+        return {
+            "character_emotion" : [{"element" : "happy", "color" : "#43a047"}, {"element" : "anticipation", "color" : "#43a047"},
+                                    {"element" : "trust", "color" : "#43a047"}, {"element" : "surprise", "color" : "#ffa000"}, 
+                                    {"element" : "sad", "color" : "#d32f2f"}, {"element" : "anger", "color" : "#d32f2f"},
+                                    {"element" : "disgust", "color" : "#d32f2f"}, {"element" : "fear", "color" : "#d32f2f"},
+                                    {"element" : "nuetral", "color" : "#6c757d"}],
+            "viewer_emotion" : [{"element" : "happy", "color" : "#43a047"}, {"element" : "anticipation", "color" : "#43a047"},
+                                    {"element" : "trust", "color" : "#43a047"}, {"element" : "surprise", "color" : "#ffa000"}, 
+                                    {"element" : "sad", "color" : "#d32f2f"}, {"element" : "anger", "color" : "#d32f2f"},
+                                    {"element" : "disgust", "color" : "#d32f2f"}, {"element" : "fear", "color" : "#d32f2f"},
+                                    {"element" : "nuetral", "color" : "#6c757d"}]
+        };
     }
 }
 
@@ -303,107 +382,112 @@ class Tagger
 var loadedVideos = {};
 var loadedSubtitles = {};
 
+var tagger = new Tagger ();
 var dataset = new Dataset ();
 var table = new BootstrapTable ();
 
 
-/*********
-* Events *
-*********/
+/**********
+* Program *
+**********/
 
-window.onload = function ()
+window.onload = () =>
 {
-    document.getElementById ("read-video-button").addEventListener ("click", ClickReadVideoButton);
-    document.getElementById ("read-subtitles-button").addEventListener ("click", ClickReadSubtitlesButton);
-
-    document.getElementById ("video-file-input").addEventListener ("change", ChangeVideoFileInput);
-    document.getElementById ("subtitles-file-input").addEventListener ("change", ChangeSubtitlesFileInput);
-
-    document.getElementById ("save-csv-button").addEventListener ("click", ClickSaveCSVButton);
+    tagger.view = document.getElementById ("categories-view");
+    tagger.UpdateView ();
 
     table.SetTableId ("data-table");
-};
 
-function ClickReadVideoButton ()
-{
-    document.getElementById ("video-file-input").click ();
-}
-
-function ClickReadSubtitlesButton ()
-{
-    document.getElementById ("subtitles-file-input").click ();
-}
-
-// Fires when select file
-function ChangeVideoFileInput (fileInput)
-{
-    document.getElementById ("video-file-name").value = fileInput.target.files[0].name;
-
-    let video = document.getElementById ("video-play");
-    let fileURL = URL.createObjectURL (fileInput.target.files[0]);
-
-    video.src = fileURL;
-    video.play ();
-}
-
-// Fires when select file
-function ChangeSubtitlesFileInput (fileInput)
-{
-    let file = fileInput.target.files[0];
-
-    document.getElementById ("subtitles-file-name").value = file.name;
-
-    let reader = new FileReader ();
-    reader.onload = function (event) {
-        let vtt = ParseVTT (event.target.result);
-
-        let video = document.getElementById ("video-play");
-        let track = video.addTextTrack ("subtitles", "Subtitles");
-
-        dataset = new Dataset ();
-        dataset.PushCategory ("time");
-        dataset.PushCategory ("text");
-        dataset.PushCategory ("character_emotion");
-        dataset.PushCategory ("viewer_emotion");
-
-        for (let cue of vtt)
-        {
-            dataset.Push (cue["start_time"], cue["text"]);
-            track.addCue (new VTTCue (cue["start_time"], cue["end_time"], cue["text"]));
-        }
-
-        track.mode = "showing";
-
-        table.ClearTable ();
-        table.Show (dataset, { "time" : Seconds2Text});
-        dataset.list.forEach ((value, index) => {
-            let whenClick = function () { document.getElementById ("video-play").currentTime = value["time"] };
-            table.AddEventListenerAt (index, "text", "click", whenClick);
-        });
+    document.getElementById ("read-video-button").onclick = () =>
+    {
+        document.getElementById ("video-file-input").click ();
     };
 
-    reader.readAsText (file);
-}
+    document.getElementById ("read-subtitles-button").onclick = () =>
+    {
+        document.getElementById ("subtitles-file-input").click ();
+    };
+
+    document.getElementById ("video-file-input").onchange = (event) =>
+    {
+        document.getElementById ("video-file-name").value = event.target.files[0].name;
+
+        let video = document.getElementById ("video-play");
+        let fileURL = URL.createObjectURL (event.target.files[0]);
+    
+        video.src = fileURL;
+        video.play ();
+    };
+
+    document.getElementById ("subtitles-file-input").onchange = (event) =>
+    {
+        let file = event.target.files[0];
+
+        document.getElementById ("subtitles-file-name").value = file.name;
+
+        let reader = new FileReader ();
+        reader.onload = function (event) {
+            let vtt = ParseVTT (event.target.result);
+
+            let video = document.getElementById ("video-play");
+
+            if (video.textTracks.length > 0)
+            {
+                video.textTracks[video.textTracks.length - 1].mode = "disabled";
+            }
+
+            let track = video.addTextTrack ("subtitles", "Subtitles");
+
+            dataset = new Dataset ();
+            dataset.PushCategory ("time");
+            dataset.PushCategory ("text");
+            
+            for (let categoryName in tagger.categories)
+            {
+                dataset.PushCategory (categoryName);
+            }
+
+            for (let cue of vtt)
+            {
+                dataset.Push (cue["start_time"], cue["text"]);
+                track.addCue (new VTTCue (cue["start_time"], cue["end_time"], cue["text"]));
+            }
+
+            track.mode = "showing";
+
+            table.ClearTable ();
+            table.Show (dataset, { "time" : Seconds2Text});
+            dataset.list.forEach ((value, index) => {
+                let whenClick = function () { document.getElementById ("video-play").currentTime = value["time"] };
+                table.AddEventListenerAt (index, "text", "click", whenClick);
+            });
+        };
+
+        reader.readAsText (file);
+    };
+
+    document.getElementById ("save-csv-button").onclick = () =>
+    {
+        let csv = dataset.ToCSV ();
+
+        let link = document.getElementById ("csv-file-download");
+        link.setAttribute ("href", encodeURI ("data:text/csv;charset=utf-8," + csv));
+        link.setAttribute ("download", document.getElementById ("csv-file-name").value + ".csv");
+
+        link.click ();
+    };
+};
 
 function ClickEmotionButton (category, emotion)
 {
     let video = document.getElementById ("video-play");
     
-    if (video.ended)
+    if (video.ended || (video.textTracks.length <= 0))
     {
         return;
     }
 
-    let trackCount = video.textTracks.length;
-    let lastTrack = video.textTracks[trackCount - 1];
-
-    if (trackCount > 1)
-    {
-        let prevTrack = video.textTracks[trackCount - 2];
-        prevTrack.mode = "disabled";
-    }
-    
-    let active = lastTrack.activeCues[0];
+    let active = video.textTracks[video.textTracks.length - 1].activeCues[0];
     
     if (!active)
     {
@@ -420,23 +504,6 @@ function ClickEmotionButton (category, emotion)
             break;
         }
     }
-}
-
-function ClickSaveCSVButton ()
-{
-    let csv = dataset.ToCSV ();
-
-    let link = document.getElementById ("csv-file-download");
-    link.setAttribute ("href", encodeURI ("data:text/csv;charset=utf-8," + csv));
-    link.setAttribute ("download", document.getElementById ("csv-file-name").value + ".csv");
-
-    link.click ();
-}
-
-function ClickTableText (time)
-{
-    let video = document.getElementById ("video-play");
-    video.currentTime = time;
 }
 
 /************
@@ -492,70 +559,6 @@ function Text2Seconds (text)
     return result;
 }
 
-function ToCSV (data)
-{
-    let count = data["time"].length;
-    let content = "time, text, character_emotion, viewer_emotion\n";
-
-    for (let i = 0; i < count; i++)
-    {
-        content += data["time"][i];
-        content += "," + data["text"][i];
-        content += "," + (!data["character_emotion"][i] ? "" : data["character_emotion"][i]);
-        content += "," + (!data["viewer_emotion"][i] ? "" : data["viewer_emotion"][i]);
-        content += "\n";
-    }
-
-    return content;
-}
-
-function DisplayData (data)
-{
-    let table = document.getElementById ("data-table");
-
-    while (table.firstChild)
-    {
-        table.removeChild (table.firstChild);
-    }
-
-    let dataCount = data["time"].length;
-
-    for (let i = 0; i < dataCount; i++)
-    {
-        let time = document.createElement ("td");
-        time.innerHTML = Seconds2Text (data["time"][i]);
-
-        let text = document.createElement ("td");
-        text.innerHTML = (data["text"][i]);
-        text.onclick = function () {ClickTableText (data["time"][i])};
-
-        let characterEmotion = document.createElement ("td");
-        characterEmotion.innerHTML = (data["character_emotion"][i] === null ? "" : Capitalize (data["character_emotion"][i]));
-
-        let viewerEmotion = document.createElement ("td");
-        viewerEmotion.innerHTML = (data["viewer_emotion"][i] === null ? "" : Capitalize (data["viewer_emotion"][i]));
-
-        let row = document.createElement ("tr");
-        row.appendChild (time);
-        row.appendChild (text);
-        row.appendChild (characterEmotion);
-        row.appendChild (viewerEmotion);
-
-        table.appendChild (row);
-    }
-}
-
-function IsCueTextValid (cue)
-{
-    let text = cue.text;
-    return (text !== undefined && text !== null && text !== '' && text !== "&nbsp;");
-}
-
-function MergeLines (cue)
-{
-    cue.text = cue.text.split ('\n').join (' ');
-}
-
 function Seconds2Text (time)
 {
     time = Math.round (Number (time));
@@ -565,9 +568,4 @@ function Seconds2Text (time)
     let seconds = Math.floor (time % 3600 % 60);
 
     return hours + "시간" + minuetes + "분" + seconds + "초";
-}
-
-function Capitalize (word)
-{
-    return word[0].toUpperCase () + word.substr (1);
 }
