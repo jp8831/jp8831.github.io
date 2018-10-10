@@ -1,0 +1,20 @@
+span.navbar-text
+{
+    cursor: default;
+}
+
+#local-file-input
+{
+    display: none;
+}
+
+#save-file-download
+{
+    display: none;
+}
+
+#video-play
+{
+    width: 90%;
+    max-width: 90%;
+}

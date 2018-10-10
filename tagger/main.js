@@ -159,7 +159,7 @@ class BootstrapTable
                 if (name in element)
                 {
                     let value = element[name];
-                    let preprocessing = preprocessings[name];
+                    let preprocessing = preprocessings ? preprocessings[name] : null;
 
                     node.innerHTML = !value ? "" : (!preprocessing ? value : preprocessing (value)); 
                 }
@@ -343,9 +343,21 @@ class Tagger
         }
     }
 
-    AddCategory ()
+    AddCategory (name, elements)
     {
-        throw "Not implemented.";
+        this.categories[name] = [];
+        dataset.PushCategory (name);
+        
+        for (let element of elements)
+        {
+            this.categories[name].push ({"element" : element, "color" : "#6c757d"});
+        }
+
+        console.log (dataset);
+
+        this.UpdateView ();
+        table.ClearTable ();
+        table.Show (dataset);
     }
 
     RemoveCategory ()
@@ -386,6 +398,9 @@ var tagger = new Tagger ();
 var dataset = new Dataset ();
 var table = new BootstrapTable ();
 
+// test
+var fileType;
+var files = {};
 
 /**********
 * Program *
@@ -398,83 +413,109 @@ window.onload = () =>
 
     table.SetTableId ("data-table");
 
-    document.getElementById ("read-video-button").onclick = () =>
+    document.getElementById ("video-file-modal-button").onclick = () =>
     {
-        document.getElementById ("video-file-input").click ();
+        let modal = document.getElementById ("file-input-modal");
+        modal.querySelector (".modal-title").innerHTML = "Load video file";
+
+        fileType = "video";
     };
 
-    document.getElementById ("read-subtitles-button").onclick = () =>
+    document.getElementById ("subtitles-file-modal-button").onclick = () =>
     {
-        document.getElementById ("subtitles-file-input").click ();
+        let modal = document.getElementById ("file-input-modal");
+        modal.querySelector (".modal-title").innerHTML = "Load subtitles file";
+
+        fileType = "subtitles";
     };
 
-    document.getElementById ("video-file-input").onchange = (event) =>
+    document.getElementById ("local-file-browse-button").onclick = () =>
     {
-        document.getElementById ("video-file-name").value = event.target.files[0].name;
-
-        let video = document.getElementById ("video-play");
-        let fileURL = URL.createObjectURL (event.target.files[0]);
-    
-        video.src = fileURL;
-        video.play ();
+        document.getElementById ("local-file-input").click ();
     };
 
-    document.getElementById ("subtitles-file-input").onchange = (event) =>
+    document.getElementById ("local-file-input").onchange = (event) =>
     {
-        let file = event.target.files[0];
+        document.getElementById ("local-file-name").value = event.target.files[0].name;
+    }
 
-        document.getElementById ("subtitles-file-name").value = file.name;
+    document.getElementById ("local-file-upload-button").onclick = () =>
+    {
+        let file = document.getElementById ("local-file-input").files[0];
 
-        let reader = new FileReader ();
-        reader.onload = function (event) {
-            let vtt = ParseVTT (event.target.result);
-
+        if (fileType === "video")
+        {
             let video = document.getElementById ("video-play");
+            video.src = URL.createObjectURL (file);
+            video.play ();
+        }
+        else if (fileType === "subtitles")
+        {
+            let reader = new FileReader ();
 
-            if (video.textTracks.length > 0)
+            reader.onload = (event) =>
             {
-                video.textTracks[video.textTracks.length - 1].mode = "disabled";
-            }
+                let vtt = ParseVTT (event.target.result);
 
-            let track = video.addTextTrack ("subtitles", "Subtitles");
+                let video = document.getElementById ("video-play");
 
-            dataset = new Dataset ();
-            dataset.PushCategory ("time");
-            dataset.PushCategory ("text");
-            
-            for (let categoryName in tagger.categories)
-            {
-                dataset.PushCategory (categoryName);
-            }
+                if (video.textTracks.length > 0)
+                {
+                    video.textTracks[video.textTracks.length - 1].mode = "disabled";
+                }
 
-            for (let cue of vtt)
-            {
-                dataset.Push (cue["start_time"], cue["text"]);
-                track.addCue (new VTTCue (cue["start_time"], cue["end_time"], cue["text"]));
-            }
+                let track = video.addTextTrack ("subtitles", "Subtitles");
 
-            track.mode = "showing";
+                dataset = new Dataset ();
+                dataset.PushCategory ("time");
+                dataset.PushCategory ("text");
+                
+                for (let categoryName in tagger.categories)
+                {
+                    dataset.PushCategory (categoryName);
+                }
 
-            table.ClearTable ();
-            table.Show (dataset, { "time" : Seconds2Text});
-            dataset.list.forEach ((value, index) => {
-                let whenClick = function () { document.getElementById ("video-play").currentTime = value["time"] };
-                table.AddEventListenerAt (index, "text", "click", whenClick);
-            });
-        };
+                for (let cue of vtt)
+                {
+                    dataset.Push (cue["start_time"], cue["text"]);
+                    track.addCue (new VTTCue (cue["start_time"], cue["end_time"], cue["text"]));
+                }
 
-        reader.readAsText (file);
+                track.mode = "showing";
+
+                table.ClearTable ();
+                table.Show (dataset, { "time" : Seconds2Text});
+                dataset.list.forEach ((value, index) => {
+                    let whenClick = function () { document.getElementById ("video-play").currentTime = value["time"] };
+                    table.AddEventListenerAt (index, "text", "click", whenClick);
+                });
+            };
+
+            reader.readAsText (file);
+        }
     };
 
-    document.getElementById ("save-csv-button").onclick = () =>
+    document.getElementById ("save-dataset-button").onclick = () =>
     {
-        let csv = dataset.ToCSV ();
+        let download = document.getElementById ("save-file-download");
+        download.setAttribute ("href", encodeURI ("data:text/csv;charset=utf-8," + dataset.ToCSV ()));
+        download.setAttribute ("download", document.getElementById ("save-file-name").value + ".csv");
+        download.click ();
+    }
 
-        let link = document.getElementById ("csv-file-download");
-        link.setAttribute ("href", encodeURI ("data:text/csv;charset=utf-8," + csv));
-        link.setAttribute ("download", document.getElementById ("csv-file-name").value + ".csv");
+    document.getElementById ("add-category-button").onclick = () =>
+    {
+        tagger.AddCategory ("test", ["elem1", "elem2", "elem3"]);
+    };
 
-        link.click ();
+    document.getElementById ("remove-category-button").onclick = () =>
+    {
+
+    };
+
+    document.getElementById ("edit-category-button").onclick = () =>
+    {
+
     };
 };
 
