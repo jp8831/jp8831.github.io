@@ -554,7 +554,7 @@ function ClickEmotionButton (category, emotion)
 function ParseVTT (text)
 {
     // Split text by cue
-    let parsed = text.split ("\n\n").slice (1);
+    let parsed = text.replace (/\r\n/g, '\n').split ("\n\n").slice (1);
     // Split cues by info
     parsed = parsed.map (cue => { return cue.split ('\n').slice (1); });
 
