@@ -426,8 +426,6 @@ var videoPlayer;
 var tagElementViews = [];
 var tableView;
 
-var fileType;
-
 /**********
 * Program *
 **********/
@@ -444,41 +442,25 @@ window.onload = () =>
 
     document.getElementById ("video-file-modal-button").onclick = () =>
     {
-        document.getElementById ("file-input-modal").getElementsByClassName ("modal-title")[0].innerHTML = "Load video file";
-        document.getElementById ("local-file-name").value = "";
-        document.getElementById ("local-file-input").value = "";
+        SetModalTitle ("file-input-modal", "Load video file");
 
-        fileType = "video";
+        ResetInputElement ("local-file-name");
+        ResetInputElement ("local-file-input");
+
+        document.getElementById ("local-file-upload-button").onclick = () =>
+        {
+            videoPlayer.PlayFromFile (GetFile ("local-file-input"));
+        };
     };
 
     document.getElementById ("subtitles-file-modal-button").onclick = () =>
     {
-        document.getElementById ("file-input-modal").getElementsByClassName ("modal-title")[0].innerHTML = "Load subtitles file";
-        document.getElementById ("local-file-name").value = "";
-        document.getElementById ("local-file-input").value = "";
+        SetModalTitle ("file-input-modal", "Load subtitles file");
 
-        fileType = "subtitles";
-    };
+        ResetInputElement ("local-file-name");
+        ResetInputElement ("local-file-input");
 
-    document.getElementById ("local-file-browse-button").onclick = () =>
-    {
-        document.getElementById ("local-file-input").click ();
-    };
-
-    document.getElementById ("local-file-input").onchange = (event) =>
-    {
-        document.getElementById ("local-file-name").value = event.target.files[0].name;
-    }
-
-    document.getElementById ("local-file-upload-button").onclick = () =>
-    {
-        let file = document.getElementById ("local-file-input").files[0];
-
-        if (fileType === "video")
-        {
-            videoPlayer.PlayFromFile (file);
-        }
-        else if (fileType === "subtitles")
+        document.getElementById ("local-file-upload-button").onclick = () =>
         {
             let reader = new FileReader ();
 
@@ -519,8 +501,18 @@ window.onload = () =>
                 });
             };
 
-            reader.readAsText (file);
-        }
+            reader.readAsText (GetFile ("local-file-input"));
+        };
+    };
+
+    document.getElementById ("local-file-browse-button").onclick = () =>
+    {
+        document.getElementById ("local-file-input").click ();
+    };
+
+    document.getElementById ("local-file-input").onchange = (event) =>
+    {
+        document.getElementById ("local-file-name").value = event.target.files[0].name;
     };
 
     document.getElementById ("save-dataset-button").onclick = () =>
@@ -529,8 +521,84 @@ window.onload = () =>
         download.setAttribute ("href", encodeURI ("data:text/csv;charset=utf-8," + dataset.ToCSV ()));
         download.setAttribute ("download", document.getElementById ("save-file-name").value + ".csv");
         download.click ();
-    }
+    };
+
+    document.getElementById ("load-dataset-modal-button").onclick = () =>
+    {
+        SetModalTitle ("file-input-modal", "Load dataset file");
+        
+        ResetInputElement ("local-file-name");
+        ResetInputElement ("local-file-input");
+
+        document.getElementById ("local-file-upload-button").onclick = () =>
+        {
+            let reader = new FileReader ();
+
+            reader.onload = (event) =>
+            {
+                let csv = event.target.result.split ("\n").slice (1);
+                csv = csv.map (value => value.split (","));
+
+                dataset = new Dataset ();
+                dataset.PushCategory ("time");
+                dataset.PushCategory ("text");
+
+                videoPlayer.AddSubtitlesTrack ("Subtitles");
+
+                for (let line of csv)
+                {
+                    dataset.Push (Number (line[0]), line[1]);
+                    videoPlayer.AddSubtitlesTrackCue (Number (line[0]), Number (line[0]) + 3, line[1]);
+                }
+
+                tagElements = [];
+                tagElementViews = [];
+                while (document.getElementById ("tag-elements").firstChild)
+                {
+                    document.getElementById ("tag-elements").removeChild (document.getElementById ("tag-elements").firstChild);
+                }
+
+                for (let element of defaultTagElements)
+                {
+                    AddTagElement (element["name"], element["values"], element["view styles"]);
+                }
+
+                for (let i = 0; i < dataset.list.length; i++)
+                {
+                    for (let j = 2; j < csv[i].length; j++)
+                    {
+                        dataset.At (i)[dataset.columnNames[j]] = csv[i][j];
+                    }
+                }
+
+                tableView.Update (dataset);
+                tableView.ForEach ((elements, index) => {
+                    elements[dataset.columnNames.indexOf ("text")].onclick = () =>
+                    {
+                        videoPlayer.SetPlayTime (dataset.list[index]["time"]);
+                    };
+                });
+            };
+
+            reader.readAsText (GetFile ("local-file-input"));
+        };
+    };
 };
+
+function GetFile (fileInputElementId)
+{
+    return document.getElementById (fileInputElementId).files[0];
+}
+
+function ResetInputElement (elementId)
+{
+    document.getElementById (elementId).value = "";
+}
+
+function SetModalTitle (modalId, title)
+{
+    document.getElementById (modalId).getElementsByClassName ("modal-title")[0].innerHTML = title;
+}
 
 function AddTagElement (name, values, viewStyles)
 {
