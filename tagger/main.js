@@ -6,7 +6,7 @@ class Dataset
 {
     constructor ()
     {
-        this.categories = [];
+        this.columnNames = [];
         this.list = [];
     }
 
@@ -17,7 +17,7 @@ class Dataset
             throw "No element to add.";
         }
 
-        if (arguments.length > this.categories.length)
+        if (arguments.length > this.columnNames.length)
         {
             throw "Elements are more than categories.";
         }
@@ -26,7 +26,7 @@ class Dataset
 
         for (let i = 0; i < arguments.length; i++)
         {
-            element[this.categories[i]] = arguments[i];
+            element[this.columnNames[i]] = arguments[i];
         }
 
         this.list.push (element);
@@ -59,22 +59,22 @@ class Dataset
 
     PushCategory (category)
     {
-        if (category in this.categories)
+        if (category in this.columnNames)
         {
             throw "Category is already exists.";
         }
 
-        this.categories.push (category);
+        this.columnNames.push (category);
     }
 
     RemoveCategory (category)
     {
-        if (!(category in this.categories))
+        if (!(category in this.columnNames))
         {
             throw "Category is not exists.";
         }
 
-        this.categories.splice (this.categories.indexOf (category));
+        this.columnNames.splice (this.columnNames.indexOf (category));
 
         for (let element of this.list)
         {
@@ -84,7 +84,7 @@ class Dataset
 
     CountCategories ()
     {
-        return this.categories.count;
+        return this.columnNames.count;
     }
 
     Select ()
@@ -95,13 +95,13 @@ class Dataset
 
     ToCSV ()
     {
-        let csv = this.categories.join (",") + "\n";
+        let csv = this.columnNames.join (",") + "\n";
 
         for (let element of this.list)
         {
-            for (let category of this.categories)
+            for (let category of this.columnNames)
             {
-                if (this.categories.indexOf (category) > 0)
+                if (this.columnNames.indexOf (category) > 0)
                 {
                     csv += ",";
                 }
@@ -116,274 +116,283 @@ class Dataset
     }
 }
 
-class BootstrapTable
+class SubtitlesReader
 {
-    constructor ()
+    static ReadVTT (text)
     {
-        this.id;
-        this.headers = [];
-    }
-
-    Show (dataset, preprocessings)
-    {
-        let header = this.GetTableHeader ();
-        let headerRow = header.querySelector ("tr");
-
-        if (!headerRow)
-        {
-            headerRow = document.createElement ("tr");
-            header.appendChild (headerRow);
-        }
-
-        this.headers = dataset.categories;
-
-        for (let name of this.headers)
-        {
-            let node = document.createElement ("th");
-            node.setAttribute ("scope", "col");
-            node.innerHTML = name;
-
-            headerRow.appendChild (node);
-        }
-
-        let body = this.GetTableBody ();
-
-        for (let element of dataset.list)
-        {
-            let rowNode = document.createElement ("tr");
-
-            for (let name of this.headers)
-            {
-                let node = document.createElement ("td");
-
-                if (name in element)
+        // Replace CRLF to LF
+        let parsed = text.replace (/\r\n/g, '\n').split ("\n\n").slice (1);
+        // Split cues by info
+        parsed = parsed.map (cue => { return cue.split ('\n').slice (1); });
+    
+        // Merge text in cues
+        parsed = parsed.map (cue => { return [cue[0], cue.slice (1).map (t => t.trim ()).join (' ')]; });
+        // Filter cue has invalid text
+        parsed = parsed.filter (cue => cue[1] && (cue[1] !== "&nbsp;"));
+    
+        parsed.forEach(cue => {
+            // Convert time text to seconds
+            cue[0] = cue[0].split ("-->").map ((text) => {
+                let seconds = 0;
+    
+                text.trim ().split (":").reverse ().forEach ((val, i) =>
                 {
-                    let value = element[name];
-                    let preprocessing = preprocessings ? preprocessings[name] : null;
-
-                    node.innerHTML = !value ? "" : (!preprocessing ? value : preprocessing (value)); 
-                }
-
-                rowNode.appendChild (node);
+                    seconds += Number (val) * Math.pow (60, i);
+                });
+    
+                return Math.round ((seconds + Number.EPSILON) * 1000) / 1000;
+            });
+            // Remove ',' in text
+            cue[1] = cue[1].replace (/,/g, "");
+        });
+    
+        let result = [];
+    
+        parsed.forEach (cue => {
+            let startTime = cue[0][0];
+            let endTime = cue[0][1];
+    
+            // Split text by character
+            let splits = cue[1].split ('-').filter (text => text);
+    
+            for (let split of splits)
+            {
+                result.push ({"start_time" : startTime, "end_time" : endTime, "text" : split});
             }
+        });
+    
+        return result;
+    }
+}
 
-            body.appendChild (rowNode);
-        }
+class VideoPlayer
+{
+    constructor (elementId)
+    {
+        this.element = document.getElementById (elementId);
     }
 
-    AddEventListenerAt (index, header, eventName, listener)
+    Play ()
     {
-        if (!header in this.headers)
-        {
-            throw "No such header \"{}\"".format (header);
-        }
-
-        let rows = this.GetTableBody ().querySelectorAll ("tr");
-
-        if (index >= rows.length || rows.length <= 0)
-        {
-            throw "Index is out of range.";
-        }
-
-        let target = rows[index].querySelectorAll ("td")[this.headers.indexOf (header)];
-        target.addEventListener (eventName, listener);
-    }
-
-    Change (index, header, value)
-    {
-        if (!header in this.headers)
-        {
-            throw "Header not exists.";
-        }
-
-        let contents = this.GetTableBody ().querySelectorAll ("tr");
-
-        if (contents.length <= 0)
+        if (this.IsPlaying ())
         {
             return;
         }
 
-        contents[index].childNodes[this.headers.indexOf (header)].innerHTML = value;
+        this.element.play ();
     }
 
-    ClearTable ()
+    PlayFromFile (file)
     {
-        if (this.header)
+        this.element.src = URL.createObjectURL (file);
+        this.Play ();
+    }
+
+    SetPlayTime (time)
+    {
+        this.element.currentTime = time;
+    }
+
+    IsPlaying ()
+    {
+        return !this.element.paused;
+    }
+
+    IsEnded ()
+    {
+        return this.element.ended;
+    }
+
+    AddSubtitlesTrack (name)
+    {
+        if (this.GetTrackCount () > 0)
         {
-            while (this.header.firstChild)
-            {
-                this.header.removeChild (this.header.firstChild);
-            }
+            this.GetLastTrack ().mode = "disabled";
         }
 
-        if (this.body)
+        let track = this.element.addTextTrack ("subtitles", name);
+        track.mode = "showing";
+    }
+
+    AddSubtitlesTrackCue (startTime, endTime, text)
+    {
+        if (this.GetTrackCount () > 0)
         {
-            while (this.body.firstChild)
-            {
-                this.body.removeChild (this.body.firstChild);
-            }
+            this.GetLastTrack ().addCue (new VTTCue (startTime, endTime, text));
         }
     }
 
-    SetTableId (id)
+    GetTrackCount ()
     {
-        if (this.id)
-        {
-            throw "Table id is already assigned.";
-        }
-
-        this.id = id;
-        this.table = document.getElementById (id);
-
-        if (!this.table)
-        {
-            throw "Getting table is failed.";
-        }
+        return this.element.textTracks.length;
     }
 
-    GetTableHeader ()
+    GetLastTrack ()
     {
-        if (!this.table)
-        {
-            throw "No table";
-        }
-
-        if (!this.header)
-        {
-            let header = this.table.querySelector ("thead");
-
-            if (!header)
-            {
-                header = document.createElement ("thead");
-                this.table.appendChild (header);
-            }
-
-            this.header = header;
-        }
-
-        return this.header;
-    }
-
-    GetTableBody ()
-    {
-        if (!this.table)
-        {
-            throw "No table";
-        }
-
-        if (!this.body)
-        {
-            let body = this.table.querySelector ("tbody");
-
-            if (!body)
-            {
-                body = document.createElement ("tbody");
-                this.table.appendChild (body);
-            }
-
-            this.body = body;
-        }
-
-        return this.body;
+        return this.element.textTracks[this.element.textTracks.length - 1];
     }
 }
 
-class Tagger
+class View
 {
-    constructor ()
+    constructor (viewElement)
     {
-        this.categories = this.GetDefaultCategories ();
-        this.view = null;
+        this.element = viewElement;
     }
 
-    UpdateView ()
+    Update () {}
+
+    Clear ()
     {
-        if (!this.view)
+        while (this.element.firstChild)
         {
-            throw "View is not assigned.";
+            this.element.removeChild (this.element.firstChild);
         }
+    }
 
-        while (this.view.firstChild)
+    AttachTo (parentElement)
+    {
+        parentElement.appendChild (this.element);
+    }
+}
+
+class TableHeaderView extends View
+{
+    constructor (viewElement)
+    {
+        super (viewElement);
+    }
+
+    Update (headerNames)
+    {
+        this.Clear ();
+
+        let container = document.createElement ("tr");
+        this.element.appendChild (container);
+
+        for (let name of headerNames)
         {
-            this.view.removeChild (this.view.firstChild);
+            let nameElement = document.createElement ("th");
+            nameElement.setAttribute ("scope", "col");
+            nameElement.innerHTML = name;
+            container.appendChild (nameElement);
         }
+    }
+}
 
-        for (let categoryName in this.categories)
+class TableBodyView extends View
+{
+    constructor (viewElement)
+    {
+        super (viewElement);
+    }
+
+    Update (headerNames, dataList)
+    {
+        this.Clear ();
+
+        for (let data of dataList)
         {
-            let row = document.createElement ("div");
-            row.setAttribute ("class", "row py-2 no-gutters");
-            row.style.maxWidth = "100%";
-            
-            this.view.appendChild (row);
+            let container = document.createElement ("tr");
+            this.element.appendChild (container);
 
-            let header = document.createElement ("h3");
-            header.setAttribute ("class", "col-12");
-            header.innerHTML = categoryName;
-
-            row.appendChild (header);
-
-            let group = document.createElement ("div");
-            group.setAttribute ("class", "btn-group btn-group-sm");
-            group.setAttribute ("role", "group");
-
-            row.appendChild (group);
-
-            for (let info of this.categories[categoryName])
+            for (let name of headerNames)
             {
-                let button = document.createElement ("button");
-                button.setAttribute ("type", "button");
-                button.setAttribute ("class", "btn");
-                button.innerHTML = info["element"];
-                button.style.color = "white";
-                button.style.backgroundColor = info["color"];
-                button.onclick = function () { ClickEmotionButton (categoryName, info["element"]); };
-
-                group.appendChild (button);
+                let dataElement = document.createElement ("td");
+                dataElement.innerHTML = name in data ? data[name] : "";
+                container.appendChild (dataElement);
             }
         }
     }
+}
 
-    AddCategory (name, elements)
+class TableView extends View
+{
+    constructor (viewElement)
     {
-        this.categories[name] = [];
-        dataset.PushCategory (name);
-        
-        for (let element of elements)
+        super (viewElement);
+        this.headerView = new TableHeaderView (viewElement.getElementsByTagName ("thead")[0]);
+        this.bodyView = new TableBodyView (viewElement.getElementsByTagName ("tbody")[0]);
+    }
+
+    Update (dataset)
+    {
+        this.Clear ();
+        this.headerView.Update (dataset.columnNames);
+        this.bodyView.Update (dataset.columnNames, dataset.list);
+    }
+
+    Clear ()
+    {
+        this.headerView.Clear ();
+        this.bodyView.Clear ();
+    }
+
+    ForEach (callback = (elements, index) => {})
+    {
+        for (let i = 0; i < this.bodyView.element.children.length; i++)
         {
-            this.categories[name].push ({"element" : element, "color" : "#6c757d"});
+            callback (this.bodyView.element.children[i].children, i);
         }
+    }
+}
 
-        console.log (dataset);
-
-        this.UpdateView ();
-        table.ClearTable ();
-        table.Show (dataset);
+class TagElementView extends View
+{
+    constructor (viewElement)
+    {
+        super (viewElement);
     }
 
-    RemoveCategory ()
+    Update (name, values, styles)
     {
-        throw "Not implemented.";
-    }
+        this.Clear ();
 
-    EditCategory ()
-    {
-        throw "Not implemented.";
-    }
+        let viewContainer = document.createElement ("div");
+        viewContainer.setAttribute ("class", "col");
+        this.element.appendChild (viewContainer);
 
-    GetDefaultCategories ()
-    {
-        return {
-            "character_emotion" : [{"element" : "happy", "color" : "#43a047"}, {"element" : "anticipation", "color" : "#43a047"},
-                                    {"element" : "trust", "color" : "#43a047"}, {"element" : "surprise", "color" : "#ffa000"}, 
-                                    {"element" : "sad", "color" : "#d32f2f"}, {"element" : "anger", "color" : "#d32f2f"},
-                                    {"element" : "disgust", "color" : "#d32f2f"}, {"element" : "fear", "color" : "#d32f2f"},
-                                    {"element" : "nuetral", "color" : "#6c757d"}],
-            "viewer_emotion" : [{"element" : "happy", "color" : "#43a047"}, {"element" : "anticipation", "color" : "#43a047"},
-                                    {"element" : "trust", "color" : "#43a047"}, {"element" : "surprise", "color" : "#ffa000"}, 
-                                    {"element" : "sad", "color" : "#d32f2f"}, {"element" : "anger", "color" : "#d32f2f"},
-                                    {"element" : "disgust", "color" : "#d32f2f"}, {"element" : "fear", "color" : "#d32f2f"},
-                                    {"element" : "nuetral", "color" : "#6c757d"}]
-        };
+        let headContainer = document.createElement ("div");
+        headContainer.setAttribute ("class", "row justify-content-between align-items-center no-gutters");
+        viewContainer.appendChild (headContainer);
+
+        let nameContainer = document.createElement ("div");
+        nameContainer.setAttribute ("class", "col-auto");
+        headContainer.appendChild (nameContainer);
+
+        let nameElement = document.createElement ("h3");
+        nameElement.innerHTML = name;
+        nameContainer.appendChild (nameElement);
+
+        let editButtonContainer = document.createElement ("div");
+        editButtonContainer.setAttribute ("class", "col-auto");
+        headContainer.appendChild (editButtonContainer);
+
+        let editButtonElement = document.createElement ("button");
+        editButtonElement.innerHTML = "Edit";
+        editButtonElement.setAttribute ("class", "btn btn-sm btn-outline-dark");
+        editButtonElement.setAttribute ("type", "button");
+        editButtonContainer.appendChild (editButtonElement);
+
+        let bodyContainer = document.createElement ("div");
+        bodyContainer.setAttribute ("class", "row no-gutters");
+        viewContainer.appendChild (bodyContainer);
+
+        for (let i = 0; i < values.length; i++)
+        {
+            let buttonContainer = document.createElement ("div");
+            buttonContainer.setAttribute ("class", "col-auto mr-1 mb-1");
+            bodyContainer.appendChild (buttonContainer);
+
+            let buttonElement = document.createElement ("button");
+            buttonElement.setAttribute ("class", "btn");
+            buttonElement.setAttribute ("type", "button");
+            buttonElement.innerHTML = values[i];
+            buttonElement.style.color = styles[i]["text color"];
+            buttonElement.style.backgroundColor = styles[i]["button color"];
+            buttonElement.onclick = () => { Tag (name, values[i]); };
+            buttonContainer.appendChild (buttonElement);
+        }
     }
 }
 
@@ -391,16 +400,33 @@ class Tagger
 * Global Variables *
 *******************/
 
-var loadedVideos = {};
-var loadedSubtitles = {};
+var defaultTagElements = [{
+    "name" : "character_emotion",
+    "values" : ["happy", "anticipation", "trust", "surprise", "sad", "anger", "disgust", "fear", "nuetral"],
+    "view styles" : [{"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#43a047"},
+                        {"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#ffa000"},
+                        {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
+                        {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
+                        {"text color" : "#FFFFFF", "button color" : "#6c757d"}]
+},
+{
+    "name" : "viewer_emotion",
+    "values" : ["happy", "anticipation", "trust", "surprise", "sad", "anger", "disgust", "fear", "nuetral"],
+    "view styles" : [{"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#43a047"},
+                        {"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#ffa000"},
+                        {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
+                        {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
+                        {"text color" : "#FFFFFF", "button color" : "#6c757d"}]
+}];
 
-var tagger = new Tagger ();
 var dataset = new Dataset ();
-var table = new BootstrapTable ();
+var tagElements = [];
 
-// test
+var videoPlayer;
+var tagElementViews = [];
+var tableView;
+
 var fileType;
-var files = {};
 
 /**********
 * Program *
@@ -408,23 +434,28 @@ var files = {};
 
 window.onload = () =>
 {
-    tagger.view = document.getElementById ("categories-view");
-    tagger.UpdateView ();
+    videoPlayer = new VideoPlayer ("video-player");
+    tableView = new TableView (document.getElementById ("dataset-table"));
 
-    table.SetTableId ("data-table");
+    for (let element of defaultTagElements)
+    {
+        AddTagElement (element["name"], element["values"], element["view styles"]);
+    }
 
     document.getElementById ("video-file-modal-button").onclick = () =>
     {
-        let modal = document.getElementById ("file-input-modal");
-        modal.querySelector (".modal-title").innerHTML = "Load video file";
+        document.getElementById ("file-input-modal").getElementsByClassName ("modal-title")[0].innerHTML = "Load video file";
+        document.getElementById ("local-file-name").value = "";
+        document.getElementById ("local-file-input").value = "";
 
         fileType = "video";
     };
 
     document.getElementById ("subtitles-file-modal-button").onclick = () =>
     {
-        let modal = document.getElementById ("file-input-modal");
-        modal.querySelector (".modal-title").innerHTML = "Load subtitles file";
+        document.getElementById ("file-input-modal").getElementsByClassName ("modal-title")[0].innerHTML = "Load subtitles file";
+        document.getElementById ("local-file-name").value = "";
+        document.getElementById ("local-file-input").value = "";
 
         fileType = "subtitles";
     };
@@ -445,9 +476,7 @@ window.onload = () =>
 
         if (fileType === "video")
         {
-            let video = document.getElementById ("video-play");
-            video.src = URL.createObjectURL (file);
-            video.play ();
+            videoPlayer.PlayFromFile (file);
         }
         else if (fileType === "subtitles")
         {
@@ -455,39 +484,38 @@ window.onload = () =>
 
             reader.onload = (event) =>
             {
-                let vtt = ParseVTT (event.target.result);
-
-                let video = document.getElementById ("video-play");
-
-                if (video.textTracks.length > 0)
-                {
-                    video.textTracks[video.textTracks.length - 1].mode = "disabled";
-                }
-
-                let track = video.addTextTrack ("subtitles", "Subtitles");
+                let vtt = SubtitlesReader.ReadVTT (event.target.result);
 
                 dataset = new Dataset ();
                 dataset.PushCategory ("time");
                 dataset.PushCategory ("text");
-                
-                for (let categoryName in tagger.categories)
-                {
-                    dataset.PushCategory (categoryName);
-                }
+
+                videoPlayer.AddSubtitlesTrack ("Subtitles");  
 
                 for (let cue of vtt)
                 {
                     dataset.Push (cue["start_time"], cue["text"]);
-                    track.addCue (new VTTCue (cue["start_time"], cue["end_time"], cue["text"]));
+                    videoPlayer.AddSubtitlesTrackCue (cue["start_time"], cue["end_time"], cue["text"]);
                 }
 
-                track.mode = "showing";
+                tagElements = [];
+                tagElementViews = [];
+                while (document.getElementById ("tag-elements").firstChild)
+                {
+                    document.getElementById ("tag-elements").removeChild (document.getElementById ("tag-elements").firstChild);
+                }
 
-                table.ClearTable ();
-                table.Show (dataset, { "time" : Seconds2Text});
-                dataset.list.forEach ((value, index) => {
-                    let whenClick = function () { document.getElementById ("video-play").currentTime = value["time"] };
-                    table.AddEventListenerAt (index, "text", "click", whenClick);
+                for (let element of defaultTagElements)
+                {
+                    AddTagElement (element["name"], element["values"], element["view styles"]);
+                }
+
+                tableView.Update (dataset);
+                tableView.ForEach ((elements, index) => {
+                    elements[dataset.columnNames.indexOf ("text")].onclick = () =>
+                    {
+                        videoPlayer.SetPlayTime (dataset.list[index]["time"]);
+                    };
                 });
             };
 
@@ -502,111 +530,55 @@ window.onload = () =>
         download.setAttribute ("download", document.getElementById ("save-file-name").value + ".csv");
         download.click ();
     }
-
-    document.getElementById ("add-category-button").onclick = () =>
-    {
-        tagger.AddCategory ("test", ["elem1", "elem2", "elem3"]);
-    };
-
-    document.getElementById ("remove-category-button").onclick = () =>
-    {
-
-    };
-
-    document.getElementById ("edit-category-button").onclick = () =>
-    {
-
-    };
 };
 
-function ClickEmotionButton (category, emotion)
+function AddTagElement (name, values, viewStyles)
 {
-    let video = document.getElementById ("video-play");
-    
-    if (video.ended || (video.textTracks.length <= 0))
+    let element = {};
+    element["name"] = name;
+    element["values"] = values;
+    element["view styles"] = viewStyles;
+    tagElements.push (element);
+
+    let view = new TagElementView (document.createElement ("div"));
+    view.element.setAttribute ("class", "row no-gutters");
+    view.AttachTo (document.getElementById ("tag-elements"));
+    view.Update (element["name"], element["values"], element["view styles"]);
+    tagElementViews.push (view);
+
+    dataset.PushCategory (name);
+    tableView.Update (dataset);
+}
+
+function Tag (name, value)
+{
+    if (videoPlayer.IsEnded () || videoPlayer.GetTrackCount () <= 0)
     {
         return;
     }
 
-    let active = video.textTracks[video.textTracks.length - 1].activeCues[0];
-    
-    if (!active)
+    if (videoPlayer.GetLastTrack ().activeCues.length <= 0)
     {
         return;
     }
+
+    let activeCue = videoPlayer.GetLastTrack ().activeCues[0];
 
     for (let i = 0; i < dataset.Count (); i++)
     {
-        if (dataset.At (i)["text"] === active.text)
+        if (dataset.At (i)["text"] === activeCue.text)
         {
-            dataset.At (i)[category] = emotion;
-            table.Change (i, category, emotion);
-            
+            dataset.At (i)[name] = value;
+
             break;
         }
     }
-}
 
-/************
-* Functions *
-************/
-
-function ParseVTT (text)
-{
-    // Split text by cue
-    let parsed = text.replace (/\r\n/g, '\n').split ("\n\n").slice (1);
-    // Split cues by info
-    parsed = parsed.map (cue => { return cue.split ('\n').slice (1); });
-
-    // Merge text in cues
-    parsed = parsed.map (cue => { return [cue[0], cue.slice (1).map (t => t.trim ()).join (' ')]; });
-    // Filter cue has invalid text
-    parsed = parsed.filter (cue => cue[1] && (cue[1] !== "&nbsp;"));
-
-    parsed.forEach(cue => {
-        // Convert time text to seconds
-        cue[0] = cue[0].split ("-->").map (text => Text2Seconds (text));
-        // Remove ',' in text
-        cue[1] = cue[1].replace (/,/g, "");
-    });
-
-    let result = [];
-
-    parsed.forEach (cue => {
-        let startTime = cue[0][0];
-        let endTime = cue[0][1];
-
-        // Split text by character
-        let splits = cue[1].split ('-').filter (text => text);
-
-        for (let split of splits)
+    tableView.Update (dataset);
+    tableView.ForEach ((elements, index) => {
+        elements[dataset.columnNames.indexOf ("text")].onclick = () =>
         {
-            result.push ({"start_time" : startTime, "end_time" : endTime, "text" : split});
-        }
+            videoPlayer.SetPlayTime (dataset.list[index]["time"]);
+        };
     });
-
-    return result;
-}
-
-function Text2Seconds (text)
-{
-    let result = 0;
-
-    text = text.trim ();
-    text.split (":").reverse ().forEach ((val, i) => {
-        result += Number (val) * Math.pow (60, i);
-    });
-
-    return result;
-}
-
-function Seconds2Text (time)
-{
-    time = Math.round (Number (time));
-
-    let hours = Math.floor (time / 3600);
-    let minuetes = Math.floor (time / 60 % 60);
-    let seconds = Math.floor (time % 3600 % 60);
-
-    return hours + "시간" + minuetes + "분" + seconds + "초";
 }
