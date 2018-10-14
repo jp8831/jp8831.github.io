@@ -353,7 +353,7 @@ class TagElementView extends View
         this.element.appendChild (viewContainer);
 
         let headContainer = document.createElement ("div");
-        headContainer.setAttribute ("class", "row justify-content-between align-items-center no-gutters");
+        headContainer.setAttribute ("class", "row justify-content-between align-items-center mb-1 no-gutters");
         viewContainer.appendChild (headContainer);
 
         let nameContainer = document.createElement ("div");
@@ -541,7 +541,7 @@ function AddTagElement (name, values, viewStyles)
     tagElements.push (element);
 
     let view = new TagElementView (document.createElement ("div"));
-    view.element.setAttribute ("class", "row no-gutters");
+    view.element.setAttribute ("class", "row align-items-center mb-2 no-gutters");
     view.AttachTo (document.getElementById ("tag-elements"));
     view.Update (element["name"], element["values"], element["view styles"]);
     tagElementViews.push (view);
