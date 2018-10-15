@@ -7,84 +7,93 @@ class Dataset
     constructor ()
     {
         this.columnNames = [];
-        this.list = [];
+        this.rows = [];
     }
 
-    Push ()
+    PushRow ()
     {
-        if (arguments.length <= 0)
+        if (arguments.length > this.CountColumns ())
         {
-            throw "No element to add.";
+            throw "Elements are more than column length.";
         }
 
-        if (arguments.length > this.columnNames.length)
+        let row = [];
+        this.rows.push (row);
+
+        for (let i = 0; i < this.CountColumns (); i++)
         {
-            throw "Elements are more than categories.";
+            row.push (i < arguments.length ? arguments[i] : null);
         }
-
-        let element = {};
-
-        for (let i = 0; i < arguments.length; i++)
-        {
-            element[this.columnNames[i]] = arguments[i];
-        }
-
-        this.list.push (element);
     }
     
-    Pop ()
+    PopRow ()
     {
-        if (this.list.length <= 0)
+        if (this.CountRows () <= 0)
         {
             return null;
         }
 
-        return this.list.pop ();
+        return this.rows.pop ();
     }
 
-    Count ()
+    PushColumn (name, fill = null)
     {
-        return this.list.length;
-    }
-
-    At (index)
-    {
-        if (index < 0 || index >= this.list.length)
+        if (this.columnNames.includes (name))
         {
-            throw "Index is out of range.";
+            return;
         }
 
-        return this.list[index];
-    }
-
-    PushCategory (category)
-    {
-        if (category in this.columnNames)
+        this.columnNames.push (name);
+        for (let row of this.rows)
         {
-            throw "Category is already exists.";
-        }
-
-        this.columnNames.push (category);
-    }
-
-    RemoveCategory (category)
-    {
-        if (!(category in this.columnNames))
-        {
-            throw "Category is not exists.";
-        }
-
-        this.columnNames.splice (this.columnNames.indexOf (category));
-
-        for (let element of this.list)
-        {
-            delete element[category];
+            row.push (fill);
         }
     }
 
-    CountCategories ()
+    PopColumn ()
     {
-        return this.columnNames.count;
+        if (this.CountColumns () <= 0)
+        {
+            return null;
+        }
+
+        this.columnNames.pop ();
+
+        return this.rows.map ((row) => row.pop ());
+    }
+
+    RemoveColumn (name)
+    {
+        for (let row of this.rows)
+        {
+            row.splice (this.GetColumnIndex (name), 1);
+        }
+        this.columnNames.splice (this.GetColumnIndex (name), 1);
+    }
+
+    GetColumnIndex (name)
+    {
+        return this.columnNames.indexOf (name);
+    }
+    
+    Get (rowIndex, columnIndex)
+    {
+        return this.rows[rowIndex][columnIndex];
+    }
+
+    Set (rowIndex, columnIndex, value)
+    {
+        this.rows[rowIndex][columnIndex] = value;
+    }
+
+    CountRows ()
+    {
+        return this.rows.length;
+    }
+
+    CountColumns ()
+    {
+        return this.columnNames.length;
     }
 
     Select ()
@@ -95,21 +104,11 @@ class Dataset
 
     ToCSV ()
     {
-        let csv = this.columnNames.join (",") + "\n";
-
-        for (let element of this.list)
+        let csv = this.columnNames.join (",");
+        for (let row of this.rows)
         {
-            for (let category of this.columnNames)
-            {
-                if (this.columnNames.indexOf (category) > 0)
-                {
-                    csv += ",";
-                }
-
-                csv += (!element[category] ? "" : element[category]);
-            }
-
             csv += "\n";
+            csv += row.join (",");
         }
 
         return csv;
@@ -287,19 +286,19 @@ class TableBodyView extends View
         super (viewElement);
     }
 
-    Update (headerNames, dataList)
+    Update (rows)
     {
         this.Clear ();
 
-        for (let data of dataList)
+        for (let row of rows)
         {
             let container = document.createElement ("tr");
             this.element.appendChild (container);
 
-            for (let name of headerNames)
+            for (let value of row)
             {
                 let dataElement = document.createElement ("td");
-                dataElement.innerHTML = name in data ? data[name] : "";
+                dataElement.innerHTML = value;
                 container.appendChild (dataElement);
             }
         }
@@ -319,7 +318,7 @@ class TableView extends View
     {
         this.Clear ();
         this.headerView.Update (dataset.columnNames);
-        this.bodyView.Update (dataset.columnNames, dataset.list);
+        this.bodyView.Update (dataset.rows);
     }
 
     Clear ()
@@ -400,24 +399,26 @@ class TagElementView extends View
 * Global Variables *
 *******************/
 
-var defaultTagElements = [{
-    "name" : "character_emotion",
-    "values" : ["happy", "anticipation", "trust", "surprise", "sad", "anger", "disgust", "fear", "nuetral"],
-    "view styles" : [{"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#43a047"},
-                        {"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#ffa000"},
-                        {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
-                        {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
-                        {"text color" : "#FFFFFF", "button color" : "#6c757d"}]
-},
-{
-    "name" : "viewer_emotion",
-    "values" : ["happy", "anticipation", "trust", "surprise", "sad", "anger", "disgust", "fear", "nuetral"],
-    "view styles" : [{"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#43a047"},
-                        {"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#ffa000"},
-                        {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
-                        {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
-                        {"text color" : "#FFFFFF", "button color" : "#6c757d"}]
-}];
+var defaultTagElements = [
+    {
+        "name" : "character_emotion",
+        "values" : ["happy", "anticipation", "trust", "surprise", "sad", "anger", "disgust", "fear", "nuetral"],
+        "view styles" : [{"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#43a047"},
+                            {"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#ffa000"},
+                            {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
+                            {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
+                            {"text color" : "#FFFFFF", "button color" : "#6c757d"}]
+    },
+    {
+        "name" : "viewer_emotion",
+        "values" : ["happy", "anticipation", "trust", "surprise", "sad", "anger", "disgust", "fear", "nuetral"],
+        "view styles" : [{"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#43a047"},
+                            {"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#ffa000"},
+                            {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
+                            {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
+                            {"text color" : "#FFFFFF", "button color" : "#6c757d"}]
+    }
+];
 
 var dataset = new Dataset ();
 var tagElements = [];
@@ -469,14 +470,15 @@ window.onload = () =>
                 let vtt = SubtitlesReader.ReadVTT (event.target.result);
 
                 dataset = new Dataset ();
-                dataset.PushCategory ("time");
-                dataset.PushCategory ("text");
+                dataset.PushColumn ("start_time");
+                dataset.PushColumn ("end_time");
+                dataset.PushColumn ("text");
 
                 videoPlayer.AddSubtitlesTrack ("Subtitles");  
 
                 for (let cue of vtt)
                 {
-                    dataset.Push (cue["start_time"], cue["text"]);
+                    dataset.PushRow (cue["start_time"], cue["end_time"], cue["text"]);
                     videoPlayer.AddSubtitlesTrackCue (cue["start_time"], cue["end_time"], cue["text"]);
                 }
 
@@ -493,10 +495,11 @@ window.onload = () =>
                 }
 
                 tableView.Update (dataset);
-                tableView.ForEach ((elements, index) => {
-                    elements[dataset.columnNames.indexOf ("text")].onclick = () =>
+                tableView.ForEach ((elements, index) =>
+                {
+                    elements[dataset.GetColumnIndex ("text")].onclick = () =>
                     {
-                        videoPlayer.SetPlayTime (dataset.list[index]["time"]);
+                        videoPlayer.SetPlayTime (dataset.Get (index, dataset.GetColumnIndex ("start_time")));
                     };
                 });
             };
@@ -540,15 +543,16 @@ window.onload = () =>
                 csv = csv.map (value => value.split (","));
 
                 dataset = new Dataset ();
-                dataset.PushCategory ("time");
-                dataset.PushCategory ("text");
+                dataset.PushColumn ("start_time");
+                dataset.PushColumn ("end_time");
+                dataset.PushColumn ("text");
 
                 videoPlayer.AddSubtitlesTrack ("Subtitles");
 
                 for (let line of csv)
                 {
-                    dataset.Push (Number (line[0]), line[1]);
-                    videoPlayer.AddSubtitlesTrackCue (Number (line[0]), Number (line[0]) + 3, line[1]);
+                    dataset.PushRow (Number (line[0]), Number (line[1]), line[2]);
+                    videoPlayer.AddSubtitlesTrackCue (Number (line[0]), Number (line[1]), line[2]);
                 }
 
                 tagElements = [];
@@ -563,19 +567,19 @@ window.onload = () =>
                     AddTagElement (element["name"], element["values"], element["view styles"]);
                 }
 
-                for (let i = 0; i < dataset.list.length; i++)
+                for (let i = 0; i < dataset.CountRows (); i++)
                 {
-                    for (let j = 2; j < csv[i].length; j++)
+                    for (let j = 3; j < csv[i].length; j++)
                     {
-                        dataset.At (i)[dataset.columnNames[j]] = csv[i][j];
+                        dataset.Set (i, j, csv[i][j]);
                     }
                 }
 
                 tableView.Update (dataset);
                 tableView.ForEach ((elements, index) => {
-                    elements[dataset.columnNames.indexOf ("text")].onclick = () =>
+                    elements[dataset.GetColumnIndex ("text")].onclick = () =>
                     {
-                        videoPlayer.SetPlayTime (dataset.list[index]["time"]);
+                        videoPlayer.SetPlayTime (dataset.Get (index, dataset.GetColumnIndex ("start_time")));
                     };
                 });
             };
@@ -614,7 +618,7 @@ function AddTagElement (name, values, viewStyles)
     view.Update (element["name"], element["values"], element["view styles"]);
     tagElementViews.push (view);
 
-    dataset.PushCategory (name);
+    dataset.PushColumn (name);
     tableView.Update (dataset);
 }
 
@@ -632,11 +636,11 @@ function Tag (name, value)
 
     let activeCue = videoPlayer.GetLastTrack ().activeCues[0];
 
-    for (let i = 0; i < dataset.Count (); i++)
+    for (let i = 0; i < dataset.CountRows (); i++)
     {
-        if (dataset.At (i)["text"] === activeCue.text)
+        if (dataset.Get (i, dataset.GetColumnIndex("text")) === activeCue.text)
         {
-            dataset.At (i)[name] = value;
+            dataset.Set (i, dataset.GetColumnIndex (name), value);
 
             break;
         }
@@ -644,9 +648,9 @@ function Tag (name, value)
 
     tableView.Update (dataset);
     tableView.ForEach ((elements, index) => {
-        elements[dataset.columnNames.indexOf ("text")].onclick = () =>
+        elements[dataset.GetColumnIndex ("text")].onclick = () =>
         {
-            videoPlayer.SetPlayTime (dataset.list[index]["time"]);
+            videoPlayer.SetPlayTime (dataset.Get (index, dataset.GetColumnIndex ("start_time")));
         };
     });
 }
