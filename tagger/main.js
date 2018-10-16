@@ -401,30 +401,49 @@ class TagElementView extends View
 
 var defaultTagElements = [
     {
+        "name" : "start_time",
+        "taggable" : false
+    },
+    {
+        "name" : "end_time",
+        "taggable" : false
+    },
+    {
+        "name" : "text",
+        "taggable" : false
+    },
+    {
         "name" : "character_emotion",
+        "taggable" : true,
         "values" : ["happy", "anticipation", "trust", "surprise", "sad", "anger", "disgust", "fear", "nuetral"],
-        "view styles" : [{"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#43a047"},
-                            {"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#ffa000"},
-                            {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
-                            {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
-                            {"text color" : "#FFFFFF", "button color" : "#6c757d"}]
+        "view" : null,
+        "view styles" : [
+            {"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#43a047"},
+            {"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#ffa000"},
+            {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
+            {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
+            {"text color" : "#FFFFFF", "button color" : "#6c757d"}
+        ]
     },
     {
         "name" : "viewer_emotion",
+        "taggable" : true,
         "values" : ["happy", "anticipation", "trust", "surprise", "sad", "anger", "disgust", "fear", "nuetral"],
-        "view styles" : [{"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#43a047"},
-                            {"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#ffa000"},
-                            {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
-                            {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
-                            {"text color" : "#FFFFFF", "button color" : "#6c757d"}]
+        "view" : null,
+        "view styles" : [
+            {"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#43a047"},
+            {"text color" : "#FFFFFF", "button color" : "#43a047"}, {"text color" : "#FFFFFF", "button color" : "#ffa000"},
+            {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
+            {"text color" : "#FFFFFF", "button color" : "#d32f2f"}, {"text color" : "#FFFFFF", "button color" : "#d32f2f"},
+            {"text color" : "#FFFFFF", "button color" : "#6c757d"}
+        ]
     }
 ];
 
-var dataset = new Dataset ();
+var dataset;
 var tagElements = [];
 
 var videoPlayer;
-var tagElementViews = [];
 var tableView;
 
 /**********
@@ -436,10 +455,7 @@ window.onload = () =>
     videoPlayer = new VideoPlayer ("video-player");
     tableView = new TableView (document.getElementById ("dataset-table"));
 
-    for (let element of defaultTagElements)
-    {
-        AddTagElement (element["name"], element["values"], element["view styles"]);
-    }
+    CreateNewDataset ();
 
     document.getElementById ("video-file-modal-button").onclick = () =>
     {
@@ -467,31 +483,15 @@ window.onload = () =>
 
             reader.onload = (event) =>
             {
+                CreateNewDataset ();
+                videoPlayer.AddSubtitlesTrack ("Subtitles"); 
+
                 let vtt = SubtitlesReader.ReadVTT (event.target.result);
-
-                dataset = new Dataset ();
-                dataset.PushColumn ("start_time");
-                dataset.PushColumn ("end_time");
-                dataset.PushColumn ("text");
-
-                videoPlayer.AddSubtitlesTrack ("Subtitles");  
 
                 for (let cue of vtt)
                 {
                     dataset.PushRow (cue["start_time"], cue["end_time"], cue["text"]);
                     videoPlayer.AddSubtitlesTrackCue (cue["start_time"], cue["end_time"], cue["text"]);
-                }
-
-                tagElements = [];
-                tagElementViews = [];
-                while (document.getElementById ("tag-elements").firstChild)
-                {
-                    document.getElementById ("tag-elements").removeChild (document.getElementById ("tag-elements").firstChild);
-                }
-
-                for (let element of defaultTagElements)
-                {
-                    AddTagElement (element["name"], element["values"], element["view styles"]);
                 }
 
                 tableView.Update (dataset);
@@ -539,32 +539,20 @@ window.onload = () =>
 
             reader.onload = (event) =>
             {
+                CreateNewDataset ();
+                videoPlayer.AddSubtitlesTrack ("Subtitles");
+
                 let csv = event.target.result.split ("\n").slice (1);
                 csv = csv.map (value => value.split (","));
 
-                dataset = new Dataset ();
-                dataset.PushColumn ("start_time");
-                dataset.PushColumn ("end_time");
-                dataset.PushColumn ("text");
-
-                videoPlayer.AddSubtitlesTrack ("Subtitles");
-
                 for (let line of csv)
                 {
-                    dataset.PushRow (Number (line[0]), Number (line[1]), line[2]);
-                    videoPlayer.AddSubtitlesTrackCue (Number (line[0]), Number (line[1]), line[2]);
-                }
+                    let startTime = Number (line[0]);
+                    let endTime = Number (line[1]);
+                    let text = line[2];
 
-                tagElements = [];
-                tagElementViews = [];
-                while (document.getElementById ("tag-elements").firstChild)
-                {
-                    document.getElementById ("tag-elements").removeChild (document.getElementById ("tag-elements").firstChild);
-                }
-
-                for (let element of defaultTagElements)
-                {
-                    AddTagElement (element["name"], element["values"], element["view styles"]);
+                    dataset.PushRow (startTime, endTime, text);
+                    videoPlayer.AddSubtitlesTrackCue (startTime, endTime, text);
                 }
 
                 for (let i = 0; i < dataset.CountRows (); i++)
@@ -604,21 +592,43 @@ function SetModalTitle (modalId, title)
     document.getElementById (modalId).getElementsByClassName ("modal-title")[0].innerHTML = title;
 }
 
-function AddTagElement (name, values, viewStyles)
+function CreateNewDataset ()
 {
+    dataset = new Dataset ();
+    tagElements = [];
+
+    while (document.getElementById ("tag-elements").firstChild)
+    {
+        document.getElementById ("tag-elements").removeChild (document.getElementById ("tag-elements").firstChild);
+    }
+
+    for (let element of defaultTagElements)
+    {
+        AddTagElement (element["name"], element["taggable"], element["values"], element["view styles"]);
+    }
+}
+
+function AddTagElement (name, taggable, values, viewStyles)
+{
+    dataset.PushColumn (name);
+
     let element = {};
     element["name"] = name;
-    element["values"] = values;
-    element["view styles"] = viewStyles;
-    tagElements.push (element);
+    element["taggable"] = taggable;
 
-    let view = new TagElementView (document.createElement ("div"));
-    view.element.setAttribute ("class", "row align-items-center mb-2 no-gutters");
-    view.AttachTo (document.getElementById ("tag-elements"));
-    view.Update (element["name"], element["values"], element["view styles"]);
-    tagElementViews.push (view);
+    if (taggable)
+    {
+        let view = new TagElementView (document.createElement ("div"));
+        view.element.setAttribute ("class", "row align-items-center mb-2 no-gutters");
+        view.AttachTo (document.getElementById ("tag-elements"));
 
-    dataset.PushColumn (name);
+        element["values"] = values;
+        element["view"] = view;
+        element["view styles"] = viewStyles;
+
+        element["view"].Update (element["name"], element["values"], element["view styles"]);
+    }
+
     tableView.Update (dataset);
 }
 
