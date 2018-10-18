@@ -567,7 +567,7 @@ window.onload = () =>
                     elements[dataset.GetColumnIndex ("text")].onclick = () =>
                     {
                         videoPlayer.SetPlayTime (dataset.GetValue (index, dataset.GetColumnIndex ("start_time")));
-                        focusIndex = index;
+                        SetFocusIndex (index);
                         focusView.Update (dataset, focusIndex);
                     };
                 });
@@ -644,7 +644,7 @@ window.onload = () =>
                     elements[dataset.GetColumnIndex ("text")].onclick = () =>
                     {
                         videoPlayer.SetPlayTime (dataset.GetValue (index, dataset.GetColumnIndex ("start_time")));
-                        focusIndex = index;
+                        SetFocusIndex (index);
                         focusView.Update (dataset, focusIndex);
                     };
                 });
@@ -670,12 +670,14 @@ window.onload = () =>
 
     document.getElementById ("previous-dataset-row-button").onclick = () =>
     {
-        ChangeFocus (focusIndex - 1);
+        SetFocusIndex (focusIndex - 1);
+        focusView.Update (dataset, focusIndex);
     };
 
     document.getElementById ("next-dataset-row-button").onclick = () =>
     {
-        ChangeFocus (focusIndex + 1);
+        SetFocusIndex (focusIndex + 1);
+        focusView.Update (dataset, focusIndex);
     };
 };
 
@@ -698,7 +700,7 @@ function CreateNewDataset ()
 {
     dataset = new Dataset ();
     tagElements = [];
-    focusIndex = 0;
+    SetFocusIndex (0);
 
     while (document.getElementById ("tag-elements").firstChild)
     {
@@ -752,7 +754,7 @@ function Tag (name, value)
 
         if (allTagged)
         {
-            focusIndex = (focusIndex + 1) % dataset.CountRows ();
+            SetFocusIndex (focusIndex + 1);
         }
 
         focusView.Update (dataset, focusIndex);
@@ -788,7 +790,7 @@ function Tag (name, value)
         elements[dataset.GetColumnIndex ("text")].onclick = () =>
         {
             videoPlayer.SetPlayTime (dataset.GetValue (index, dataset.GetColumnIndex ("start_time")));
-            focusIndex = index;
+            SetFocusIndex (index);
             focusView.Update (dataset, focusIndex);
         };
     });
@@ -816,7 +818,7 @@ function SetTagMode (mode)
     }
 }
 
-function ChangeFocus (index)
+function SetFocusIndex (index)
 {
     if (dataset.CountRows () <= 0)
     {
@@ -824,15 +826,11 @@ function ChangeFocus (index)
     }
     else
     {
+        focusIndex = index % dataset.CountRows ();
+
         if (index < 0)
         {
-            focusIndex = dataset.CountRows () + index % dataset.CountRows ();
-        }
-        else
-        {
-            focusIndex = index % dataset.CountRows ();
+            focusIndex += dataset.CountRows ();
         }
     }
-
-    focusView.Update (dataset, focusIndex);
 }
