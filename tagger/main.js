@@ -76,12 +76,12 @@ class Dataset
         return this.columnNames.indexOf (name);
     }
     
-    Get (rowIndex, columnIndex)
+    GetValue (rowIndex, columnIndex)
     {
         return this.rows[rowIndex][columnIndex];
     }
 
-    Set (rowIndex, columnIndex, value)
+    SetValue (rowIndex, columnIndex, value)
     {
         this.rows[rowIndex][columnIndex] = value;
     }
@@ -94,6 +94,26 @@ class Dataset
     CountColumns ()
     {
         return this.columnNames.length;
+    }
+
+    ForEachRow (callback = (values, index) => {})
+    {
+        if (this.CountRows () <= 0)
+        {
+            return;
+        }
+
+        this.rows.forEach (callback);
+    }
+
+    ForEachColumn (rowIndex, callback = (value, index) => {})
+    {
+        if ((this.CountRows () <= 0) || (this.CountColumns () <= 0))
+        {
+            return;
+        }
+
+        this.rows[rowIndex].forEach (callback);
     }
 
     Select ()
@@ -129,9 +149,11 @@ class SubtitlesReader
         // Filter cue has invalid text
         parsed = parsed.filter (cue => cue[1] && (cue[1] !== "&nbsp;"));
     
-        parsed.forEach(cue => {
+        parsed.forEach(cue =>
+        {
             // Convert time text to seconds
-            cue[0] = cue[0].split ("-->").map ((text) => {
+            cue[0] = cue[0].split ("-->").map ((text) =>
+            {
                 let seconds = 0;
     
                 text.trim ().split (":").reverse ().forEach ((val, i) =>
@@ -147,7 +169,8 @@ class SubtitlesReader
     
         let result = [];
     
-        parsed.forEach (cue => {
+        parsed.forEach (cue =>
+        {
             let startTime = cue[0][0];
             let endTime = cue[0][1];
     
@@ -395,11 +418,34 @@ class TagElementView extends View
     }
 }
 
+class FocusView extends View
+{
+    constructor (viewElement)
+    {
+        super (viewElement);
+    }
+
+    Update (dataset, focusIndex)
+    {
+        this.Clear ();
+
+        dataset.ForEachColumn (focusIndex, (value) =>
+        {
+            let valueElement = document.createElement ("input");
+            valueElement.setAttribute ("class", "form-control");
+            valueElement.setAttribute ("type", "text");
+            valueElement.setAttribute ("readonly", "");
+            valueElement.value = value;
+            this.element.appendChild (valueElement);
+        });
+    }
+}
+
 /*******************
 * Global Variables *
 *******************/
 
-var defaultTagElements = [
+const defaultTagElements = [
     {
         "name" : "start_time",
         "taggable" : false
@@ -440,8 +486,17 @@ var defaultTagElements = [
     }
 ];
 
+const ETagMode = Object.freeze ({
+    Stack : 1,
+    Auto : 2
+});
+
 var dataset;
 var tagElements = [];
+
+var tagMode;
+var focusView;
+var focusIndex;
 
 var videoPlayer;
 var tableView;
@@ -452,11 +507,21 @@ var tableView;
 
 window.onload = () =>
 {
+    //
+    // Initialization
+    //
+
     videoPlayer = new VideoPlayer ("video-player");
     tableView = new TableView (document.getElementById ("dataset-table"));
+    focusView = new FocusView (document.getElementById ("focus-dataset-row"));
 
     CreateNewDataset ();
+    SetTagMode (ETagMode.Auto);
 
+    //
+    // Loading files
+    //
+    
     document.getElementById ("video-file-modal-button").onclick = () =>
     {
         SetModalTitle ("file-input-modal", "Load video file");
@@ -494,12 +559,16 @@ window.onload = () =>
                     videoPlayer.AddSubtitlesTrackCue (cue["start_time"], cue["end_time"], cue["text"]);
                 }
 
+                focusView.Update (dataset, focusIndex);
+
                 tableView.Update (dataset);
                 tableView.ForEach ((elements, index) =>
                 {
                     elements[dataset.GetColumnIndex ("text")].onclick = () =>
                     {
-                        videoPlayer.SetPlayTime (dataset.Get (index, dataset.GetColumnIndex ("start_time")));
+                        videoPlayer.SetPlayTime (dataset.GetValue (index, dataset.GetColumnIndex ("start_time")));
+                        focusIndex = index;
+                        focusView.Update (dataset, focusIndex);
                     };
                 });
             };
@@ -517,6 +586,10 @@ window.onload = () =>
     {
         document.getElementById ("local-file-name").value = event.target.files[0].name;
     };
+
+    //
+    //  Dataset
+    //
 
     document.getElementById ("save-dataset-button").onclick = () =>
     {
@@ -559,21 +632,50 @@ window.onload = () =>
                 {
                     for (let j = 3; j < csv[i].length; j++)
                     {
-                        dataset.Set (i, j, csv[i][j]);
+                        dataset.SetValue (i, j, csv[i][j]);
                     }
                 }
 
+                focusView.Update (dataset, focusIndex);
+
                 tableView.Update (dataset);
-                tableView.ForEach ((elements, index) => {
+                tableView.ForEach ((elements, index) =>
+                {
                     elements[dataset.GetColumnIndex ("text")].onclick = () =>
                     {
-                        videoPlayer.SetPlayTime (dataset.Get (index, dataset.GetColumnIndex ("start_time")));
+                        videoPlayer.SetPlayTime (dataset.GetValue (index, dataset.GetColumnIndex ("start_time")));
+                        focusIndex = index;
+                        focusView.Update (dataset, focusIndex);
                     };
                 });
             };
 
             reader.readAsText (GetFile ("local-file-input"));
         };
+    };
+    
+    //
+    // Tag controls
+    //
+
+    document.getElementById ("tag-mode-stack-button").onclick = () =>
+    {
+        SetTagMode (ETagMode.Stack);
+    };
+
+    document.getElementById ("tag-mode-auto-button").onclick = () =>
+    {
+        SetTagMode (ETagMode.Auto);
+    };
+
+    document.getElementById ("previous-dataset-row-button").onclick = () =>
+    {
+        ChangeFocus (focusIndex - 1);
+    };
+
+    document.getElementById ("next-dataset-row-button").onclick = () =>
+    {
+        ChangeFocus (focusIndex + 1);
     };
 };
 
@@ -596,6 +698,7 @@ function CreateNewDataset ()
 {
     dataset = new Dataset ();
     tagElements = [];
+    focusIndex = 0;
 
     while (document.getElementById ("tag-elements").firstChild)
     {
@@ -634,33 +737,102 @@ function AddTagElement (name, taggable, values, viewStyles)
 
 function Tag (name, value)
 {
-    if (videoPlayer.IsEnded () || videoPlayer.GetTrackCount () <= 0)
+    if (tagMode === ETagMode.Stack)
     {
-        return;
-    }
+        dataset.SetValue (focusIndex, dataset.GetColumnIndex (name), value);
 
-    if (videoPlayer.GetLastTrack ().activeCues.length <= 0)
-    {
-        return;
-    }
-
-    let activeCue = videoPlayer.GetLastTrack ().activeCues[0];
-
-    for (let i = 0; i < dataset.CountRows (); i++)
-    {
-        if (dataset.Get (i, dataset.GetColumnIndex("text")) === activeCue.text)
+        let allTagged = true;
+        dataset.ForEachColumn (focusIndex, (value) =>
         {
-            dataset.Set (i, dataset.GetColumnIndex (name), value);
+            if (value === null)
+            {
+                allTagged = false;
+            }
+        });
 
-            break;
+        if (allTagged)
+        {
+            focusIndex = (focusIndex + 1) % dataset.CountRows ();
+        }
+
+        focusView.Update (dataset, focusIndex);
+    }
+    else if (tagMode === ETagMode.Auto)
+    {
+        if (videoPlayer.IsEnded () || videoPlayer.GetTrackCount () <= 0)
+        {
+            return;
+        }
+    
+        if (videoPlayer.GetLastTrack ().activeCues.length <= 0)
+        {
+            return;
+        }
+    
+        let activeCue = videoPlayer.GetLastTrack ().activeCues[0];
+    
+        for (let i = 0; i < dataset.CountRows (); i++)
+        {
+            if (dataset.GetValue (i, dataset.GetColumnIndex("text")) === activeCue.text)
+            {
+                dataset.SetValue (i, dataset.GetColumnIndex (name), value);
+    
+                break;
+            }
         }
     }
 
     tableView.Update (dataset);
-    tableView.ForEach ((elements, index) => {
+    tableView.ForEach ((elements, index) =>
+    {
         elements[dataset.GetColumnIndex ("text")].onclick = () =>
         {
-            videoPlayer.SetPlayTime (dataset.Get (index, dataset.GetColumnIndex ("start_time")));
+            videoPlayer.SetPlayTime (dataset.GetValue (index, dataset.GetColumnIndex ("start_time")));
+            focusIndex = index;
+            focusView.Update (dataset, focusIndex);
         };
     });
+}
+
+function SetTagMode (mode)
+{
+    tagMode = mode;
+
+    switch (mode)
+    {
+        case ETagMode.Stack:
+        {
+            document.getElementById ("tag-mode-stack-button").classList.add ("active");
+            document.getElementById ("tag-mode-auto-button").classList.remove ("active");
+            break;
+        }
+
+        case ETagMode.Auto:
+        {
+            document.getElementById ("tag-mode-stack-button").classList.remove ("active");
+            document.getElementById ("tag-mode-auto-button").classList.add ("active");
+            break;
+        }
+    }
+}
+
+function ChangeFocus (index)
+{
+    if (dataset.CountRows () <= 0)
+    {
+        focusIndex = 0;
+    }
+    else
+    {
+        if (index < 0)
+        {
+            focusIndex = dataset.CountRows () + index % dataset.CountRows ();
+        }
+        else
+        {
+            focusIndex = index % dataset.CountRows ();
+        }
+    }
+
+    focusView.Update (dataset, focusIndex);
 }
