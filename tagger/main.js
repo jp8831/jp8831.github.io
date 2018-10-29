@@ -210,6 +210,16 @@ class VideoPlayer
         this.Play ();
     }
 
+    Pause ()
+    {
+        if (!this.IsPlaying ())
+        {
+            return;
+        }
+
+        this.element.pause ();
+    }
+
     SetPlayTime (time)
     {
         this.element.currentTime = time;
@@ -679,6 +689,52 @@ window.onload = () =>
         SetFocusIndex (focusIndex + 1);
         focusView.Update (dataset, focusIndex);
     };
+
+    //
+    //  Keyboard Events
+    //
+
+    document.addEventListener ("keyup", (event) =>
+    {
+        switch (event.code)
+        {
+            case "Space":
+            {
+                event.preventDefault ();
+
+                if (videoPlayer.IsPlaying ())
+                {
+                    videoPlayer.Pause ();
+                }
+                else
+                {
+                    videoPlayer.Play ();
+                }
+
+                break;
+            }
+
+            case "ArrowLeft":
+            {
+                event.preventDefault ();
+
+                SetFocusIndex (focusIndex - 1);
+                focusView.Update (dataset, focusIndex);
+
+                break;
+            }
+
+            case "ArrowRight":
+            {
+                event.preventDefault ();
+
+                SetFocusIndex (focusIndex + 1);
+                focusView.Update (dataset, focusIndex);
+                
+                break;
+            }
+        }
+    });
 };
 
 function GetFile (fileInputElementId)
