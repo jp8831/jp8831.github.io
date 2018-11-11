@@ -237,7 +237,7 @@ class VideoPlayer
 
     AddSubtitlesTrack (name)
     {
-        if (this.GetTrackCount () > 0)
+        if (this.CountTracks () > 0)
         {
             this.GetLastTrack ().mode = "disabled";
         }
@@ -248,13 +248,13 @@ class VideoPlayer
 
     AddSubtitlesTrackCue (startTime, endTime, text)
     {
-        if (this.GetTrackCount () > 0)
+        if (this.CountTracks () > 0)
         {
             this.GetLastTrack ().addCue (new VTTCue (startTime, endTime, text));
         }
     }
 
-    GetTrackCount ()
+    CountTracks ()
     {
         return this.element.textTracks.length;
     }
@@ -496,7 +496,7 @@ const defaultTagElements = [
     }
 ];
 
-const ETagMode = Object.freeze ({
+const EFocusMode = Object.freeze ({
     Stack : 1,
     Auto : 2
 });
@@ -504,9 +504,10 @@ const ETagMode = Object.freeze ({
 var dataset;
 var tagElements = [];
 
-var tagMode;
-var focusView;
 var focusIndex;
+var isLoopFocusIndex = true;
+var focusMode;
+var focusView;
 
 var videoPlayer;
 var tableView;
@@ -523,10 +524,10 @@ window.onload = () =>
 
     videoPlayer = new VideoPlayer ("video-player");
     tableView = new TableView (document.getElementById ("dataset-table"));
-    focusView = new FocusView (document.getElementById ("focus-dataset-row"));
+    focusView = new FocusView (document.getElementById ("focus-row"));
 
     CreateNewDataset ();
-    SetTagMode (ETagMode.Auto);
+    SetFocusMode (EFocusMode.Auto);
 
     //
     // Loading files
@@ -601,6 +602,21 @@ window.onload = () =>
     //  Dataset
     //
 
+    document.getElementById ("save-dataset-modal-button").onclick = () =>
+    {
+        let isAllTagged = true;
+        for (let i = 0; i < dataset.CountRows (); i++)
+        {
+            if (!dataset.rows[i].every ((value) => { return value != null; }))
+            {
+                isAllTagged = false;
+                break;
+            }
+        }
+
+        SetModalTitle ("save-dataset-modal", "Save dataset" + (isAllTagged ? "" : " (Not all tagged)"));
+    }
+
     document.getElementById ("save-dataset-button").onclick = () =>
     {
         let download = document.getElementById ("save-file-download");
@@ -665,26 +681,26 @@ window.onload = () =>
     };
     
     //
-    // Tag controls
+    // Fcous bar
     //
 
     document.getElementById ("tag-mode-stack-button").onclick = () =>
     {
-        SetTagMode (ETagMode.Stack);
+        SetFocusMode (EFocusMode.Stack);
     };
 
     document.getElementById ("tag-mode-auto-button").onclick = () =>
     {
-        SetTagMode (ETagMode.Auto);
+        SetFocusMode (EFocusMode.Auto);
     };
 
-    document.getElementById ("previous-dataset-row-button").onclick = () =>
+    document.getElementById ("previous-row-button").onclick = () =>
     {
         SetFocusIndex (focusIndex - 1);
         focusView.Update (dataset, focusIndex);
     };
 
-    document.getElementById ("next-dataset-row-button").onclick = () =>
+    document.getElementById ("next-row-button").onclick = () =>
     {
         SetFocusIndex (focusIndex + 1);
         focusView.Update (dataset, focusIndex);
@@ -693,6 +709,17 @@ window.onload = () =>
     //
     //  Keyboard Events
     //
+
+    document.addEventListener ("keydown", (event) => 
+    {
+        switch (event.code)
+        {
+            case "Space":
+            {
+                event.preventDefault ();
+            }
+        }
+    });
 
     document.addEventListener ("keyup", (event) =>
     {
@@ -795,7 +822,7 @@ function AddTagElement (name, taggable, values, viewStyles)
 
 function Tag (name, value)
 {
-    if (tagMode === ETagMode.Stack)
+    if (focusMode === EFocusMode.Stack)
     {
         dataset.SetValue (focusIndex, dataset.GetColumnIndex (name), value);
 
@@ -815,9 +842,9 @@ function Tag (name, value)
 
         focusView.Update (dataset, focusIndex);
     }
-    else if (tagMode === ETagMode.Auto)
+    else if (focusMode === EFocusMode.Auto)
     {
-        if (videoPlayer.IsEnded () || videoPlayer.GetTrackCount () <= 0)
+        if (!videoPlayer.IsPlaying ())
         {
             return;
         }
@@ -852,20 +879,20 @@ function Tag (name, value)
     });
 }
 
-function SetTagMode (mode)
+function SetFocusMode (mode)
 {
-    tagMode = mode;
+    focusMode = mode;
 
     switch (mode)
     {
-        case ETagMode.Stack:
+        case EFocusMode.Stack:
         {
             document.getElementById ("tag-mode-stack-button").classList.add ("active");
             document.getElementById ("tag-mode-auto-button").classList.remove ("active");
             break;
         }
 
-        case ETagMode.Auto:
+        case EFocusMode.Auto:
         {
             document.getElementById ("tag-mode-stack-button").classList.remove ("active");
             document.getElementById ("tag-mode-auto-button").classList.add ("active");
@@ -879,14 +906,16 @@ function SetFocusIndex (index)
     if (dataset.CountRows () <= 0)
     {
         focusIndex = 0;
+        return;
+    }
+
+    let count = dataset.CountRows ();
+    if (isLoopFocusIndex)
+    {
+        focusIndex = index % count + (index < 0 ? count : 0);
     }
     else
     {
-        focusIndex = index % dataset.CountRows ();
-
-        if (index < 0)
-        {
-            focusIndex += dataset.CountRows ();
-        }
+        focusIndex = Math.min (Math.max (index, 0), count);
     }
 }

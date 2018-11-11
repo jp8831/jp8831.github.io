@@ -87,7 +87,7 @@
                     <span class="navbar-text dropdown-toggle" role="button" data-toggle="dropdown">Dataset</span>
                     <div class="dropdown-menu">
                         <button class="dropdown-item" type="button">New</button>
-                        <button class="dropdown-item" type="button" data-toggle="modal"
+                        <button id="save-dataset-modal-button" class="dropdown-item" type="button" data-toggle="modal"
                             data-target="#save-dataset-modal">Save</button>
                         <button id="load-dataset-modal-button" class="dropdown-item" type="button" data-toggle="modal"
                             data-target="#file-input-modal">Load</button>
@@ -138,14 +138,19 @@
 
                     <div class="row no-gutters">
                         <div class="col-auto mr-1">
-                            <button id="previous-dataset-row-button" class="btn btn-secondary" type="button">Previous</button>
+                            <button id="previous-row-button" class="btn btn-secondary" type="button">Previous</button>
                         </div>
                         <div class="col-auto mr-1">
-                            <div id="focus-dataset-row" class="input-group">
+                            <div id="focus-row" class="form-inline">
+                                <input class="form-control" type="text" readonly value="시간">
+                                <input class="form-control" type="text" readonly value="시간">
+                                <input class="form-control" type="text" readonly value="자마아아아아아아아아아악 다으으으으음">
+                                <input class="form-control" type="text" readonly value="asdasdasdasd">
+                                <input class="form-control" type="text" readonly value="asd">
                             </div>
                         </div>
                         <div class="col-auto mr-1">
-                            <button id="next-dataset-row-button" class="btn btn-secondary" type="button">Next</button>
+                            <button id="next-row-button" class="btn btn-secondary" type="button">Next</button>
                         </div>
                         <div class="col-auto mr-1">
                             <button id="tag-mode-stack-button" class="btn btn-secondary" type="button">Stack</button>
