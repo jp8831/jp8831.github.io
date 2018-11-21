@@ -782,10 +782,21 @@ window.onload = () =>
 
     document.addEventListener ("keydown", (event) =>
     {
+        let isShowingModal = document.getElementById ("file-input-modal").classList.contains ("show") ||
+            document.getElementById ("save-dataset-modal").classList.contains ("show") ||
+            document.getElementById ("edit-tag-element-modal").classList.contains ("show");
+        
+        if (isShowingModal)
+        {
+            return;
+        }
+        
         switch (event.code)
         {
             case "Space":
             {
+                event.preventDefault ();
+
                 if (videoPlayer.IsPlaying ())
                 {
                     videoPlayer.Pause ();
@@ -797,7 +808,6 @@ window.onload = () =>
 
                 break;
             }
-            
 
             case "ArrowLeft":
             {
