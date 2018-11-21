@@ -38,10 +38,12 @@ class Dataset
 
     PushColumn (name, fill = null)
     {
+        /*
         if (this.columnNames.includes (name))
         {
             return;
         }
+        */
 
         this.columnNames.push (name);
         for (let row of this.rows)
@@ -404,6 +406,9 @@ class TagElementView extends View
         editButtonElement.innerHTML = "Edit";
         editButtonElement.setAttribute ("class", "btn btn-sm btn-outline-dark");
         editButtonElement.setAttribute ("type", "button");
+        editButtonElement.setAttribute ("data-toggle", "modal");
+        editButtonElement.setAttribute ("data-target", "#edit-tag-element-modal");
+        editButtonElement.onclick = () => { WhenEditTagElement (name); };
         editButtonContainer.appendChild (editButtonElement);
 
         let bodyContainer = document.createElement ("div");
@@ -503,6 +508,7 @@ const EFocusMode = Object.freeze ({
 
 var dataset;
 var tagElements = [];
+var editingTagElementName;
 
 var focusIndex;
 var isLoopFocusIndex = true;
@@ -707,28 +713,79 @@ window.onload = () =>
     };
 
     //
+    //  Tag Elements
+    //
+
+    document.getElementById ("add-tag-element-button").onclick = () =>
+    {
+        AddTagElement ("New tag element", true, [], []);
+    };
+
+    document.getElementById ("add-tag-element-value-button").onclick = () =>
+    {
+        let valueEditContainer = document.getElementById ("tag-element-value-edit");
+
+        let valueEditCol = document.createElement ("div");
+        valueEditCol.setAttribute ("class", "col-auto mr-1 mb-1");
+        valueEditContainer.appendChild (valueEditCol);
+
+        let editElement = document.createElement ("input");
+        editElement.setAttribute ("class", "form-control");
+        editElement.setAttribute ("type", "text");
+        valueEditCol.appendChild (editElement);
+    };
+
+    document.getElementById ("edit-tag-element-button").onclick = () =>
+    {
+        let tagElement;
+        for (const element of tagElements)
+        {
+            if (element["name"] == editingTagElementName)
+            {
+                tagElement = element;
+                break;
+            }
+        }
+    
+        let values = [];
+        let styles = tagElement["view styles"];
+
+        const edits = document.getElementById ("tag-element-value-edit");
+        for (let i = 0; i < edits.childElementCount; i++)
+        {
+            let value = edits.children[i].firstElementChild.value;
+            if (!value)
+            {
+                continue;
+            }
+
+            values.push (edits.children[i].firstElementChild.value);
+
+            if (i >= styles.length)
+            {
+                styles.push ({"text color" : "#FFFFFF", "button color" : "#6c757d"});
+            }
+        }
+    
+        tagElement["name"] = document.getElementById ("tag-element-name-edit").value;
+        tagElement["values"] = values;
+        tagElement["view styles"] = styles;
+        tagElement["view"].Update (tagElement["name"], tagElement["values"], tagElement["view styles"]);
+
+        dataset.columnNames[dataset.GetColumnIndex (editingTagElementName)] = tagElement["name"];
+        tableView.Update (dataset);
+    };
+
+    //
     //  Keyboard Events
     //
 
-    document.addEventListener ("keydown", (event) => 
+    document.addEventListener ("keydown", (event) =>
     {
         switch (event.code)
         {
             case "Space":
             {
-                event.preventDefault ();
-            }
-        }
-    });
-
-    document.addEventListener ("keyup", (event) =>
-    {
-        switch (event.code)
-        {
-            case "Space":
-            {
-                event.preventDefault ();
-
                 if (videoPlayer.IsPlaying ())
                 {
                     videoPlayer.Pause ();
@@ -740,6 +797,7 @@ window.onload = () =>
 
                 break;
             }
+            
 
             case "ArrowLeft":
             {
@@ -816,7 +874,7 @@ function AddTagElement (name, taggable, values, viewStyles)
 
         element["view"].Update (element["name"], element["values"], element["view styles"]);
     }
-
+    tagElements.push (element);
     tableView.Update (dataset);
 }
 
@@ -917,5 +975,44 @@ function SetFocusIndex (index)
     else
     {
         focusIndex = Math.min (Math.max (index, 0), count);
+    }
+}
+
+function WhenEditTagElement (name)
+{
+    editingTagElementName = name;
+
+    let modalTitle = "Edit " + name;
+    SetModalTitle ("edit-tag-element-modal", modalTitle);
+
+    document.getElementById ("tag-element-name-edit").value = name;
+
+    let tagElement;
+    for (const element of tagElements)
+    {
+        if (element["name"] == name)
+        {
+            tagElement = element;
+            break;
+        }
+    }
+
+    let valueEditContainer = document.getElementById ("tag-element-value-edit");
+    while (valueEditContainer.firstChild)
+    {
+        valueEditContainer.removeChild (valueEditContainer.firstChild);
+    }
+
+    for (const value of tagElement["values"])
+    {
+        let valueEditCol = document.createElement ("div");
+        valueEditCol.setAttribute ("class", "col-auto mr-1 mb-1");
+        valueEditContainer.appendChild (valueEditCol);
+
+        let editElement = document.createElement ("input");
+        editElement.setAttribute ("class", "form-control");
+        editElement.setAttribute ("type", "text");
+        editElement.value = value;
+        valueEditCol.appendChild (editElement);
     }
 }

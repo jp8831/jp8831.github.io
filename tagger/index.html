@@ -78,6 +78,44 @@
             </div>
         </div>
 
+        <!--Edit Tag Element Modal-->
+        <div id="edit-tag-element-modal" class="modal fade" role="dialog" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Edit Tag Element</h3>
+                        <button class="close" type="button" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="container-fluid">
+                            <div class="row mb-2">
+                                <h5>Element name</h5>
+                            </div>
+                            <div class="row mb-2">
+                                <input id="tag-element-name-edit" class="form-control" type="text">
+                            </div>
+                            <div class="row mb-2 align-items-center">
+                                <div class="col-auto mr-1">
+                                    <h5>Values</h5>
+                                </div>
+                                <div class="col-auto">
+                                    <button id="add-tag-element-value-button" class="btn btn-primary" type="button">Add</button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div id="tag-element-value-edit" class="form-row">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
+                        <button id="edit-tag-element-button" class="btn btn-primary" type="button" data-dismiss="modal">Apply</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!--Menu-->
         <nav class="navbar navbar-expand navbar-dark bg-dark">
             <ul class="navbar-nav">
