@@ -148,7 +148,22 @@ function ReadCSV (csv)
         let node = CreateEventNode (event.id, event.subject, event.action, event.object);
         event.node = node;
 
-        SetEventNodeTransform (node, previousNode === null ? 0 : previousNode.getBoundingClientRect ().right + 10, 0);
+        let x = 0;
+        let y = 0;
+
+        if (previousNode !== null)
+        {
+            x = previousNode.getBoundingClientRect ().right + 15;
+            y = previousNode.getBoundingClientRect ().top;
+
+            if (previousNode.getBoundingClientRect ().right >= window.innerWidth)
+            {
+                x = 0;
+                y = previousNode.getBoundingClientRect ().bottom + 100;
+            }
+        }
+
+        SetEventNodeTransform (node, x, y);
         previousNode = node;
     });
 }
