@@ -11,24 +11,32 @@
 
     <body>
         <svg id="svg" preserveAspectRatio="xMidYMid meet">
-            <!-- Event Node Example
-            <g transform="translate(50,50)">
-                <rect width="150" height="100" rx="5" ry="5" fill="white" stroke="black" stroke-width="3"></rect>
-                <line x1="20" y1="0" x2="20" y2="100" stroke="black" stroke-width="3"></line>
-                <circle cx="10" cy="50" r="5" fill="black"></circle>
-                <line x1="130" y1="0" x2="130" y2="100" stroke="black" stroke-width="3"></line>
-                <circle cx="140" cy="50" r="5" fill="black"></circle>
-                <text x="30" y="30">Subject</text>
-                <text x="30" y="55">Action</text>
-                <text x="30" y="80">Object</text>
-            </g>
-            -->
-            <!-- Event Transition Example
-                <path d="M50 50C150 50,50 150,150 150" stroke="black" fill="transparent"></path>
-            -->
+            <rect class="background" width="100%" height="100%"></rect>
+
+            <!-- Event Node Example -->
+            <!-- <g class="node" transform="translate(50,50)">
+                <rect width="150" height="110" rx="5" ry="5"></rect>
+
+                <circle cx="0" cy="20" r="5"></circle>
+                <text id="test" x="10" y="25">Previous</text>
+
+                <circle cx="150" cy="20" r="5"></circle>
+                <text x="105" y="25">Next</text>
+
+                <text x="20" y="50">Subject</text>
+                <text x="20" y="70">Action</text>
+                <text x="20" y="90">Object</text>
+            </g> -->
+           
+            <!-- Event Transition Example -->
+            <!-- <path d="M50 50C150 50,50 150,150 150" stroke="black" fill="transparent"></path> -->
+           
         </svg>
 
         <input id="local-file-input" type="file" style="display:none;">
-        <button id="read-csv-button" type="button">Read Event CSV</button>
+        <button id="read-csv-button" class="button" type="button">Read Event CSV</button>
+        
+        <a id="file-download" style="display:none;"></a>
+        <button id="save-csv-button" class="button" type="button">Save Event CSV</button>
     </body>
 </html>
