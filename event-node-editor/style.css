@@ -1,3 +1,8 @@
+html
+{
+    font-family: 'Courier New', Courier, monospace;
+}
+
 body
 {
     margin: 0;
@@ -54,7 +59,51 @@ svg
     z-index: -1;
 }
 
-svg path
+.button
 {
-    pointer-events: none;
+    display: inline-block;
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 5px;
+    text-align: center;
+    text-decoration: none;
+    color: white;
+    background-color: #686868;
+    cursor: pointer;
+}
+
+.background
+{
+    fill: #242323;
+}
+
+.node
+{
+    stroke: black;
+    stroke-width: 1px;
+}
+
+.node rect
+{
+    fill: #555454;
+}
+
+.node text
+{
+    stroke: none;
+    stroke-width: 0;
+    fill: white;
+}
+
+.link-point
+{
+    fill: #eb8b32;
+}
+
+.link
+{
+    stroke: black;
+    stroke-width: 3px;
+    fill: none;
 }

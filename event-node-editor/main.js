@@ -210,7 +210,7 @@ class SVGCurve
             [endPointX, endPointY].join (" "),
         ].join (", ");
 
-        this.element.getAttribute ("d", ["M", startPointX, startPointY, "C", curve].join (" "));
+        this.element.setAttribute ("d", ["M", startPointX, startPointY, "C", curve].join (" "));
     }
 }
 
@@ -273,7 +273,7 @@ class SVGGroup
     GetTransform ()
     {
         let transform = this.element.getAttribute ("transform");
-        let translate = transform.match (/translate\(([0-9]*\.?[0-9]*),([0-9]*\.?[0-9]*)\)/);
+        let translate = transform.match (/translate\((-?[0-9]*\.?[0-9]*),(-?[0-9]*\.?[0-9]*)\)/);
         let rotate = transform.match (/rotate\(([0-9]*\.?[0-9]*)\)/);
         let scale = transform.match (/scale\(([0-9]*\.?[0-9]*),([0-9]*\.?[0-9]*)\)/);
         return {
@@ -411,25 +411,39 @@ class EventGraph
     ReadCSV (csv)
     {
         csv = csv.split ("\n").slice (1);
-        csv = csv.map (line => line.split (","));
-
-        for (let line of csv)
-        {
+        csv = csv.map (line => line.trim ().split (","));
+        csv.forEach((element, index) => {
             this.AddVertex ({
-                subject : line[0],
-                action : line[1],
-                object : line[2]
+                id : index,
+                subject : element[0],
+                action : element[1],
+                object : element[2]
             });
-        }
+        });
     }
 
     SaveCSV ()
     {
-        let csv = ["subject", "action", "object"].join (",");
+        let csv = ["id", "subject", "action", "object", "previous", "next"].join (",");
         for (let vertex of this.vertices)
         {
             csv += "\n";
-            csv += [vertex.subject, vertex.action, vertex.object].join (",");
+
+            let prevIds = [];
+            let nextIds = [];
+            for (let edge of this.edges)
+            {
+                if (edge.next === vertex.id && prevIds.includes (edge.prev) === false)
+                {
+                    prevIds.push (edge.prev);
+                }
+                else if (edge.prev === vertex.id && nextIds.includes (edge.next) === false)
+                {
+                    nextIds.push (edge.next);
+                }
+            }
+
+            csv += [vertex.id, vertex.subject, vertex.action, vertex.object, prevIds.join (" "), nextIds.join (" ")].join (",");
         }
 
         let download = document.getElementById ("file-download");
@@ -449,16 +463,19 @@ class NodeEditor
     {
         this.svg;
         this.nodes = [];
+        this.links = [];
     }
 
-    CreateNode (subject, action, object)
+    CreateNode (id, subject, action, object)
     {
-        let node = new SVGGroup ();
-        svg.AddChild (node);
-        node.element.classList.add ("node");
+        let node = {};
+        node.id = id;
+        node.svg = new SVGGroup ();
+        this.svg.AddChild (node.svg, "nodes");
+        node.svg.element.classList.add ("node");
         
         let nodeRect = new SVGRectangle ();
-        node.Add (nodeRect);
+        node.svg.Add (nodeRect);
         nodeRect.SetCornerRadius (5, 5);
     
         let subjectText = new SVGText ();
@@ -473,19 +490,24 @@ class NodeEditor
         objectText.Set (object);
         objectText.position.Set (20, 90);
     
-        node.Add (subjectText);
-        node.Add (actiontText);
-        node.Add (objectText);
+        node.svg.Add (subjectText);
+        node.svg.Add (actiontText);
+        node.svg.Add (objectText);
     
         nodeRect.SetSize (Math.max (100, subjectText.GetWidth (), actiontText.GetWidth (), objectText.GetWidth ()) + 40, 110);
     
         let previousPoint = new SVGCircle ();
+        previousPoint.element.classList.add ("link-point");
         previousPoint.SetRadius (5);
         previousPoint.position.Set (0, 20);
     
         let nextPoint = new SVGCircle ();
+        nextPoint.element.classList.add ("link-point");
         nextPoint.SetRadius (5);
         nextPoint.position.Set (nodeRect.GetSize ().width, 20);
+
+        node.prevLinkPoint = previousPoint;
+        node.nextLinkPoint = nextPoint;
         
         let previousText = new SVGText ();
         previousText.Set ("Previous");
@@ -495,10 +517,10 @@ class NodeEditor
         nextText.Set ("Next");
         nextText.position.Set (nodeRect.GetSize ().width - 45, 25);
     
-        node.Add (previousPoint);
-        node.Add (nextPoint);
-        node.Add (previousText);
-        node.Add (nextText);
+        node.svg.Add (previousPoint);
+        node.svg.Add (nextPoint);
+        node.svg.Add (previousText);
+        node.svg.Add (nextText);
 
         this.nodes.push (node);
 
@@ -510,9 +532,27 @@ class NodeEditor
 
     }
 
-    ConnectNode ()
+    ConnectNode (from, to)
     {
+        let link = { svg : new SVGCurve (), previous : from, next : to };
+        this.svg.AddChild (link.svg);
+        this.links.push (link);
+        link.svg.element.classList.add ("link");
 
+        let fromTranslate = from.svg.GetTransform ().translate;
+        let fromLinkPoint = from.nextLinkPoint.position.Get ();
+
+        let startX = fromTranslate.x + fromLinkPoint.x;
+        let startY = fromTranslate.y + fromLinkPoint.y;
+
+        let toTranslate = to.svg.GetTransform ().translate;
+        let toLinkPoint = to.prevLinkPoint.position.Get ();
+
+        let endX = toTranslate.x + toLinkPoint.x;
+        let endY = toTranslate.y + toLinkPoint.y;
+
+        link.svg.Set (startX, startY, endX, endY, startX, endY, endX, startY);
+        graph.AddEdge ({ prev : from.id, next : to.id});
     }
 }
 
@@ -522,11 +562,14 @@ var editor = new NodeEditor ();
 
 var lastMousePosition = { x : 0, y : 0 };
 var panningScreen = false;
+var connectingNode = null;
+var draggingNode = null;
 
 window.onload = function ()
 {
     svg = new SVG ("svg");
     svg.SetViewBox (0, 0, window.innerWidth, window.innerHeight);
+    svg.AddLayer ("nodes");
     svg.AddEventListner ("mousedown", StartDrag);
     svg.AddEventListner ("mousemove", Drag);
     svg.AddEventListner ("mouseup", EndDrag);
@@ -543,13 +586,13 @@ window.onload = function ()
             let lastNode;
             for (let vertex of graph.vertices)
             {
-                let node = editor.CreateNode (vertex.subject, vertex.action, vertex.object);
+                let node = editor.CreateNode (vertex.id, vertex.subject, vertex.action, vertex.object);
 
                 if (lastNode)
                 {
-                    let transform = node.GetTransform ();
-                    transform.translate.x = lastNode.element.getBoundingClientRect ().right + 20;
-                    node.SetTransform (transform);
+                    let transform = node.svg.GetTransform ();
+                    transform.translate.x = lastNode.svg.element.getBoundingClientRect ().right + 20;
+                    node.svg.SetTransform (transform);
                 }
 
                 lastNode = node;
@@ -579,134 +622,118 @@ window.onresize = function ()
 *    Dragging    *
 ****************/
 
-function SetEventNodeTransform (eventNode, x, y)
-{
-    let translate = "translate(" + x + "," + y + ")";
-    eventNode.setAttribute ("transform", translate);
-}
-
 function StartDrag (event)
 {
     event.preventDefault ();
 
-    panningScreen = true;
-    UpdateLastMousePosition (event.clientX, event.clientY);
-
-    // draggingElement = event.target;
-
-    // if (draggingElement.classList.contains ("transition-point"))
-    // {
-    //     let elementRect = draggingElement.getBoundingClientRect ();
-    //     let x = elementRect.left + elementRect.width / 2;
-    //     let y = elementRect.top + elementRect.height / 2; 
-    //     transitionPath = CreateSVGBezierCurve (x, y, lastMousePosition.x, lastMousePosition.y);
-    // }
+    if (event.target.classList.contains ("background"))
+    {
+        panningScreen = true;
+        UpdateLastMousePosition (event.clientX, event.clientY);
+    }
+    else if (event.target.classList.contains ("link-point"))
+    {
+        for (let node of editor.nodes)
+        {
+            if (node.svg.element === event.target.parentElement)
+            {
+                connectingNode = node;
+                break;
+            }
+        }
+    }
+    else if (event.target.parentElement.classList.contains ("node"))
+    {
+        for (let node of editor.nodes)
+        {
+            if (node.svg.element === event.target.parentElement)
+            {
+                UpdateLastMousePosition (event.clientX, event.clientY);
+                draggingNode = node;
+            }
+        }
+    }
 }
 
 function Drag (event)
 {
-    if (panningScreen === false)
+    event.preventDefault ();
+
+    if (panningScreen)
     {
-        return;
+        let mouseMove = GetMouseMovement (event.clientX, event.clientY);
+        UpdateLastMousePosition (event.clientX, event.clientY);
+
+        let viewBox = svg.GetViewBox ();
+        viewBox.x += mouseMove.x;
+        viewBox.y += mouseMove.y;
+        svg.SetViewBox (viewBox.x, viewBox.y, viewBox.width, viewBox.height);
     }
+    else if (draggingNode !== null)
+    {
+        let mouseMove = GetMouseMovement (event.clientX, event.clientY);
+        UpdateLastMousePosition (event.clientX, event.clientY);
 
-    let mouseMove = GetMouseMovement (event.clientX, event.clientY);
-    UpdateLastMousePosition (event.clientX, event.clientY);
+        let transform = draggingNode.svg.GetTransform ();
+        transform.translate.x += mouseMove.x;
+        transform.translate.y += mouseMove.y;
 
-    let viewBox = svg.GetViewBox ();
-    viewBox.x += mouseMove.x;
-    viewBox.y += mouseMove.y;
-    svg.SetViewBox (viewBox.x, viewBox.y, viewBox.width, viewBox.height);
+        draggingNode.svg.SetTransform (transform);
 
-//     if (draggingElement === null)
-//     {
-//         return;
-//     }
+        for (let link of editor.links)
+        {
+            if (draggingNode === link.previous)
+            {
+                let fromTranslate = draggingNode.svg.GetTransform ().translate;
+                let fromLinkPoint = draggingNode.nextLinkPoint.position.Get ();
 
-//     let viewBox = GetViewBox ();
-//     let mouseMove = GetMouseMovement (event.clientX, event.clientY);
-//     UpdateLastMousePosition (event.clientX, event.clientY);
+                let startX = fromTranslate.x + fromLinkPoint.x;
+                let startY = fromTranslate.y + fromLinkPoint.y;
 
-//     if (draggingElement === svg)
-//     {
-//         let viewBox = svg.getAttribute ("viewBox").split (" ");
-//         viewBox[0] = Number (viewBox[0]) + mouseMove.x;
-//         viewBox[1] = Number (viewBox[1]) + mouseMove.y;
-//         svg.setAttribute ("viewBox", viewBox.join (" "));
-//     }
+                let curve = link.svg.GetInfo ();
 
-//     if (draggingElement.classList.contains ("node-rect"))
-//     {
-//         let node = draggingElement.parentElement;
-//         let x = node.getBoundingClientRect ().left + mouseMove.x + viewBox.x;
-//         let y = node.getBoundingClientRect ().top + mouseMove.y + viewBox.y;
-//         SetEventNodeTransform (node, x, y);
+                let endX = curve.end.x;
+                let endY = curve.end.y;
 
-//         let id = draggingElement.parentElement.id.substr (4);
-//         for (let edge of eventGraph.edges)
-//         {
-//             let curve = GetSVGBezierCurve (edge.path);
+                link.svg.Set (startX, startY, endX, endY, startX, endY, endX, startY);
+            }
+            else if (draggingNode === link.next)
+            {
+                let toTranslate = draggingNode.svg.GetTransform ().translate;
+                let toLinkPoint = draggingNode.prevLinkPoint.position.Get ();
 
-//             if (id === edge.from)
-//             {
-//                 curve.start.x += mouseMove.x;
-//                 curve.start.y += mouseMove.y;
-//             }
-//             else if (id === edge.to)
-//             {
-//                 curve.end.x += mouseMove.x;
-//                 curve.end.y += mouseMove.y;
-//             }
+                let endX = toTranslate.x + toLinkPoint.x;
+                let endY = toTranslate.y + toLinkPoint.y;
 
-//             SetSVGBezierCurve (edge.path, curve.start.x, curve.start.y, curve.end.x, curve.end.y);
-//         }
-//     }
+                let curve = link.svg.GetInfo ();
 
-//     if (draggingElement.classList.contains ("transition-point"))
-//     {
-//         let elementRect = draggingElement.getBoundingClientRect ();
-//         let x = elementRect.left + elementRect.width / 2 + viewBox.x;
-//         let y = elementRect.top + elementRect.height / 2 + viewBox.y; 
-//         SetSVGBezierCurve (transitionPath, x, y, lastMousePosition.x + viewBox.x, lastMousePosition.y + viewBox.y);
-//     }
+                let startX = curve.start.x;
+                let startY = curve.start.y;
+
+                link.svg.Set (startX, startY, endX, endY, startX, endY, endX, startY);
+            }
+        }
+    }
 }
 
 function EndDrag (event)
 {
     panningScreen = false;
+    draggingNode = null;
 
-    // if (draggingElement === null)
-    // {
-    //     return;
-    // }
+    if (event.target.classList.contains ("link-point") && connectingNode !== null)
+    {
+        for (let node of editor.nodes)
+        {
+            if (node.svg.element === event.target.parentElement)
+            {
+                editor.ConnectNode (connectingNode, node);
+                break;
+            }
+        }
 
-    // if (draggingElement.classList.contains ("transition-point") && event.target.classList.contains ("transition-point"))
-    // {
-    //     let fromId = draggingElement.parentElement.id.substr (4);
-    //     let toId = event.target.parentElement.id.substr (4);
-
-    //     AddGraphEdge (fromId, toId, transitionPath);
-
-    //     let viewBox = GetViewBox ();
-
-    //     let startRect = draggingElement.getBoundingClientRect ();
-    //     let startX = startRect.left + startRect.width / 2 + viewBox.x;
-    //     let startY = startRect.top + startRect.height / 2 + viewBox.y;
-
-    //     let endRect = event.target.getBoundingClientRect ();
-    //     let endX = endRect.left + endRect.width / 2 + viewBox.x;
-    //     let endY = endRect.top + endRect.height / 2 + viewBox.y;
-
-    //     SetSVGBezierCurve (transitionPath, startX, startY, endX, endY);
-
-    //     transitionPath = null;
-    // }
-    // else if (transitionPath !== null)
-    // {
-    //     transitionPath.remove ();
-    // }
-
-    // draggingElement = null;
+        connectingNode = null;
+    }
 }
 
 /***********************
