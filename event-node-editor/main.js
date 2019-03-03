@@ -574,6 +574,7 @@ window.onload = function ()
     svg.AddEventListner ("mousemove", Drag);
     svg.AddEventListner ("mouseup", EndDrag);
     svg.AddEventListner ("mouseleave", EndDrag);
+    svg.AddEventListner ("mousewheel", Zoom);
 
     editor.svg = svg;
 
@@ -618,9 +619,9 @@ window.onresize = function ()
     svg.SetViewBox (viewBox.x, viewBox.y, window.innerWidth, window.innerHeight);
 }
 
-/****************
-*    Dragging    *
-****************/
+/**************
+*    Mouse    *
+**************/
 
 function StartDrag (event)
 {
@@ -665,8 +666,8 @@ function Drag (event)
         UpdateLastMousePosition (event.clientX, event.clientY);
 
         let viewBox = svg.GetViewBox ();
-        viewBox.x += mouseMove.x;
-        viewBox.y += mouseMove.y;
+        viewBox.x -= mouseMove.x;
+        viewBox.y -= mouseMove.y;
         svg.SetViewBox (viewBox.x, viewBox.y, viewBox.width, viewBox.height);
     }
     else if (draggingNode !== null)
@@ -736,9 +737,18 @@ function EndDrag (event)
     }
 }
 
-/***********************
-*    Mouse Position    *
-***********************/
+function Zoom (event)
+{
+    let direcion = Math.sign (event.wheelDelta);
+
+    let viewBox = svg.GetViewBox ();
+    let aspectRatio = viewBox.width / viewBox.height;
+
+    viewBox.width += 100 * aspectRatio * direcion;
+    viewBox.height += 100 * direcion;
+
+    svg.SetViewBox (viewBox.x, viewBox.y, viewBox.width, viewBox.height);
+}
 
 function UpdateLastMousePosition (x, y)
 {
