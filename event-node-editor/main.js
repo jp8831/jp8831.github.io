@@ -364,16 +364,6 @@ class SVG
         this.backgroundElement.setAttribute ("x", x);
         this.backgroundElement.setAttribute ("y", y);
     }
-
-    AddEventListner (type, listner)
-    {
-        this.element.addEventListener (type, listner);
-    }
-
-    RemoveEventListner (type, listner)
-    {
-        this.element.removeEventListener (type, listner);
-    }
 }
 
 /********************
@@ -446,10 +436,7 @@ class EventGraph
             csv += [vertex.id, vertex.subject, vertex.action, vertex.object, prevIds.join (" "), nextIds.join (" ")].join (",");
         }
 
-        let download = document.getElementById ("file-download");
-        download.setAttribute ("href", encodeURI ("data:text/csv;charset=utf-8," + csv));
-        download.setAttribute ("download", download.value + ".csv");
-        download.click ();
+        return csv;
     }
 }
 
@@ -457,20 +444,54 @@ class EventGraph
 *    Node Editor    *
 ********************/
 
+class NodeLinkPoint
+{
+    constructor (node, svg)
+    {
+        this.node = node;
+        this.svg = svg;
+    }
+}
+
+class Node
+{
+    constructor (id, svg)
+    {
+        this.id = id;
+        this.svg = svg;
+
+        this.prevLinkPoint = new NodeLinkPoint (this, this.svg);
+        this.nextLinkPoint = new NodeLinkPoint (this, this.svg);
+    }
+}
+
 class NodeEditor
 {
-    constructor ()
+    constructor (svg, graph)
     {
-        this.svg;
+        this.graph = graph;
+
         this.nodes = [];
         this.links = [];
+
+        this.lastMousePosition = { x : 0, y : 0 };
+        this.dragTarget = null;
+
+        this.svg = svg;
+
+        this.svg.SetViewBox (0, 0, window.innerWidth, window.innerHeight);
+        this.svg.AddLayer ("nodes");
+
+        this.svg.element.onmousedown = (event) => { event.preventDefault (); this.StartDrag (event.target, event.clientX, event.clientY); };
+        this.svg.element.onmousemove = (event) => { event.preventDefault (); this.Drag (event.clientX, event.clientY); };
+        this.svg.element.onmouseup = (event) => { event.preventDefault (); this.EndDrag (event.target, event.clientX, event.clientY); };
+        this.svg.element.onmouseleave = (event) => { event.preventDefault (); this.EndDrag (event.target, event.clientX, event.clientY); };
+        this.svg.element.onmousewheel = (event) => { event.preventDefault (); this.Zoom (event.wheelDelta); };
     }
 
     CreateNode (id, subject, action, object)
     {
-        let node = {};
-        node.id = id;
-        node.svg = new SVGGroup ();
+        let node = new Node (id, new SVGGroup ());
         this.svg.AddChild (node.svg, "nodes");
         node.svg.element.classList.add ("node");
         
@@ -497,17 +518,17 @@ class NodeEditor
         nodeRect.SetSize (Math.max (100, subjectText.GetWidth (), actiontText.GetWidth (), objectText.GetWidth ()) + 40, 110);
     
         let previousPoint = new SVGCircle ();
-        previousPoint.element.classList.add ("link-point");
+        previousPoint.element.classList.add ("link-point", "previous");
         previousPoint.SetRadius (5);
         previousPoint.position.Set (0, 20);
     
         let nextPoint = new SVGCircle ();
-        nextPoint.element.classList.add ("link-point");
+        nextPoint.element.classList.add ("link-point", "next");
         nextPoint.SetRadius (5);
         nextPoint.position.Set (nodeRect.GetSize ().width, 20);
 
-        node.prevLinkPoint = previousPoint;
-        node.nextLinkPoint = nextPoint;
+        node.prevLinkPoint.svg = previousPoint;
+        node.nextLinkPoint.svg = nextPoint;
         
         let previousText = new SVGText ();
         previousText.Set ("Previous");
@@ -532,53 +553,173 @@ class NodeEditor
 
     }
 
-    ConnectNode (from, to)
+    ConnectNode (from, destination)
     {
-        let link = { svg : new SVGCurve (), previous : from, next : to };
+        let link = { svg : new SVGCurve (), previous : from, next : destination };
         this.svg.AddChild (link.svg);
         this.links.push (link);
         link.svg.element.classList.add ("link");
 
         let fromTranslate = from.svg.GetTransform ().translate;
-        let fromLinkPoint = from.nextLinkPoint.position.Get ();
+        let fromLinkPoint = from.nextLinkPoint.svg.position.Get ();
 
         let startX = fromTranslate.x + fromLinkPoint.x;
         let startY = fromTranslate.y + fromLinkPoint.y;
 
-        let toTranslate = to.svg.GetTransform ().translate;
-        let toLinkPoint = to.prevLinkPoint.position.Get ();
+        let destTranslate = destination.svg.GetTransform ().translate;
+        let destLinkPoint = destination.prevLinkPoint.svg.position.Get ();
 
-        let endX = toTranslate.x + toLinkPoint.x;
-        let endY = toTranslate.y + toLinkPoint.y;
+        let endX = destTranslate.x + destLinkPoint.x;
+        let endY = destTranslate.y + destLinkPoint.y;
 
         link.svg.Set (startX, startY, endX, endY, startX, endY, endX, startY);
-        graph.AddEdge ({ prev : from.id, next : to.id});
+        this.graph.AddEdge ({ prev : from.id, next : destination.id});
+    }
+
+    FindNodeFromElement (element)
+    {
+        for (let node of this.nodes)
+        {
+            if (node.svg.element === element)
+            {
+                return node;
+            }
+        }
+
+        return null;
+    }
+
+    StartDrag (target, mouseX, mouseY)
+    {
+        this.lastMousePosition.x = mouseX;
+        this.lastMousePosition.y = mouseY;
+
+        if (target.classList.contains ("background"))
+        {
+            this.dragTarget = this.svg;
+        }
+        else if (target.classList.contains ("link-point") && target.classList.contains ("next"))
+        {
+            let node = this.FindNodeFromElement (target.parentElement);
+            this.dragTarget = node.prevLinkPoint;
+        }
+        else if (target.parentElement.classList.contains ("node"))
+        {
+            this.dragTarget = this.FindNodeFromElement (target.parentElement);
+        }
+    }
+
+    EndDrag (target, mouseX, mouseY)
+    {
+        if (this.dragTarget === null)
+        {
+            return;
+        }
+
+        this.lastMousePosition.x = mouseX;
+        this.lastMousePosition.y = mouseY;
+    
+        if (target.classList.contains ("link-point") && target.classList.contains ("previous"))
+        {
+            let destinationNode = this.FindNodeFromElement (target.parentElement);
+            this.ConnectNode (this.dragTarget.node, destinationNode);
+        }
+
+        this.dragTarget = null;
+    }
+
+    Drag (mouseX, mouseY)
+    {
+        if (this.dragTarget === null)
+        {
+            return;
+        }
+
+        let mouseMoveX = mouseX - this.lastMousePosition.x;
+        let mouseMoveY = mouseY - this.lastMousePosition.y;
+
+        this.lastMousePosition.x = mouseX;
+        this.lastMousePosition.y = mouseY;
+
+        if (this.dragTarget.constructor === SVG)
+        {
+            let viewBox = this.svg.GetViewBox ();
+            viewBox.x -= mouseMoveX;
+            viewBox.y -= mouseMoveY;
+            this.svg.SetViewBox (viewBox.x, viewBox.y, viewBox.width, viewBox.height);
+        }
+        else if (this.dragTarget.constructor === Node)
+        {
+            let moveNode = this.dragTarget;
+            let transform = moveNode.svg.GetTransform ();
+            transform.translate.x += mouseMoveX;
+            transform.translate.y += mouseMoveY;
+
+            moveNode.svg.SetTransform (transform);
+
+            for (let link of this.links)
+            {
+                if (moveNode === link.previous)
+                {
+                    let fromTranslate = moveNode.svg.GetTransform ().translate;
+                    let fromLinkPoint = moveNode.nextLinkPoint.svg.position.Get ();
+
+                    let startX = fromTranslate.x + fromLinkPoint.x;
+                    let startY = fromTranslate.y + fromLinkPoint.y;
+
+                    let curve = link.svg.GetInfo ();
+
+                    let endX = curve.end.x;
+                    let endY = curve.end.y;
+
+                    link.svg.Set (startX, startY, endX, endY, startX, endY, endX, startY);
+                }
+                else if (moveNode === link.next)
+                {
+                    let toTranslate = moveNode.svg.GetTransform ().translate;
+                    let toLinkPoint = moveNode.prevLinkPoint.svg.position.Get ();
+
+                    let endX = toTranslate.x + toLinkPoint.x;
+                    let endY = toTranslate.y + toLinkPoint.y;
+
+                    let curve = link.svg.GetInfo ();
+
+                    let startX = curve.start.x;
+                    let startY = curve.start.y;
+
+                    link.svg.Set (startX, startY, endX, endY, startX, endY, endX, startY);
+                }
+            }
+        }
+    }
+
+    Zoom (wheelDelta)
+    {
+        let direcion = Math.sign (wheelDelta);
+
+        let viewBox = this.svg.GetViewBox ();
+        let aspectRatio = viewBox.width / viewBox.height;
+    
+        viewBox.width += 100 * aspectRatio * direcion;
+        viewBox.height += 100 * direcion;
+    
+        this.svg.SetViewBox (viewBox.x, viewBox.y, viewBox.width, viewBox.height);
     }
 }
 
-var svg;
-var graph = new EventGraph ();
-var editor = new NodeEditor ();
-
-var lastMousePosition = { x : 0, y : 0 };
-var panningScreen = false;
-var connectingNode = null;
-var draggingNode = null;
-
-window.onload = function ()
+window.addEventListener ("load", function ()
 {
-    svg = new SVG ("svg");
-    svg.SetViewBox (0, 0, window.innerWidth, window.innerHeight);
-    svg.AddLayer ("nodes");
-    svg.AddEventListner ("mousedown", StartDrag);
-    svg.AddEventListner ("mousemove", Drag);
-    svg.AddEventListner ("mouseup", EndDrag);
-    svg.AddEventListner ("mouseleave", EndDrag);
-    svg.AddEventListner ("mousewheel", Zoom);
+    var svg = new SVG ("svg");
+    var graph = new EventGraph ();
+    var editor = new NodeEditor (svg, graph);
 
-    editor.svg = svg;
+    window.addEventListener ("resize", function ()
+    {
+        let viewBox = svg.GetViewBox ();
+        svg.SetViewBox (viewBox.x, viewBox.y, window.innerWidth, window.innerHeight);
+    });
 
-    document.getElementById ("local-file-input").onchange = function (event)
+    document.getElementById ("local-file-input").addEventListener ("change", function (event)
     {
         let reader = new FileReader ();
         reader.onload = function (event) {
@@ -600,163 +741,19 @@ window.onload = function ()
             }
         };
         reader.readAsText (event.target.files[0]);
-    };
+    });
 
-    document.getElementById ("read-csv-button").onclick = function ()
+    document.getElementById ("read-csv-button").addEventListener ("click", function ()
     {
         document.getElementById ("local-file-input").click ();
-    }
+    });
 
-    document.getElementById ("save-csv-button").onclick = function ()
+    document.getElementById ("save-csv-button").addEventListener ("click", function ()
     {
-        graph.SaveCSV ();
-    }
-}
-
-window.onresize = function ()
-{
-    let viewBox = svg.GetViewBox ();
-    svg.SetViewBox (viewBox.x, viewBox.y, window.innerWidth, window.innerHeight);
-}
-
-/**************
-*    Mouse    *
-**************/
-
-function StartDrag (event)
-{
-    event.preventDefault ();
-
-    if (event.target.classList.contains ("background"))
-    {
-        panningScreen = true;
-        UpdateLastMousePosition (event.clientX, event.clientY);
-    }
-    else if (event.target.classList.contains ("link-point"))
-    {
-        for (let node of editor.nodes)
-        {
-            if (node.svg.element === event.target.parentElement)
-            {
-                connectingNode = node;
-                break;
-            }
-        }
-    }
-    else if (event.target.parentElement.classList.contains ("node"))
-    {
-        for (let node of editor.nodes)
-        {
-            if (node.svg.element === event.target.parentElement)
-            {
-                UpdateLastMousePosition (event.clientX, event.clientY);
-                draggingNode = node;
-            }
-        }
-    }
-}
-
-function Drag (event)
-{
-    event.preventDefault ();
-
-    if (panningScreen)
-    {
-        let mouseMove = GetMouseMovement (event.clientX, event.clientY);
-        UpdateLastMousePosition (event.clientX, event.clientY);
-
-        let viewBox = svg.GetViewBox ();
-        viewBox.x -= mouseMove.x;
-        viewBox.y -= mouseMove.y;
-        svg.SetViewBox (viewBox.x, viewBox.y, viewBox.width, viewBox.height);
-    }
-    else if (draggingNode !== null)
-    {
-        let mouseMove = GetMouseMovement (event.clientX, event.clientY);
-        UpdateLastMousePosition (event.clientX, event.clientY);
-
-        let transform = draggingNode.svg.GetTransform ();
-        transform.translate.x += mouseMove.x;
-        transform.translate.y += mouseMove.y;
-
-        draggingNode.svg.SetTransform (transform);
-
-        for (let link of editor.links)
-        {
-            if (draggingNode === link.previous)
-            {
-                let fromTranslate = draggingNode.svg.GetTransform ().translate;
-                let fromLinkPoint = draggingNode.nextLinkPoint.position.Get ();
-
-                let startX = fromTranslate.x + fromLinkPoint.x;
-                let startY = fromTranslate.y + fromLinkPoint.y;
-
-                let curve = link.svg.GetInfo ();
-
-                let endX = curve.end.x;
-                let endY = curve.end.y;
-
-                link.svg.Set (startX, startY, endX, endY, startX, endY, endX, startY);
-            }
-            else if (draggingNode === link.next)
-            {
-                let toTranslate = draggingNode.svg.GetTransform ().translate;
-                let toLinkPoint = draggingNode.prevLinkPoint.position.Get ();
-
-                let endX = toTranslate.x + toLinkPoint.x;
-                let endY = toTranslate.y + toLinkPoint.y;
-
-                let curve = link.svg.GetInfo ();
-
-                let startX = curve.start.x;
-                let startY = curve.start.y;
-
-                link.svg.Set (startX, startY, endX, endY, startX, endY, endX, startY);
-            }
-        }
-    }
-}
-
-function EndDrag (event)
-{
-    panningScreen = false;
-    draggingNode = null;
-
-    if (event.target.classList.contains ("link-point") && connectingNode !== null)
-    {
-        for (let node of editor.nodes)
-        {
-            if (node.svg.element === event.target.parentElement)
-            {
-                editor.ConnectNode (connectingNode, node);
-                break;
-            }
-        }
-
-        connectingNode = null;
-    }
-}
-
-function Zoom (event)
-{
-    let direcion = Math.sign (event.wheelDelta);
-
-    let viewBox = svg.GetViewBox ();
-    let aspectRatio = viewBox.width / viewBox.height;
-
-    viewBox.width += 100 * aspectRatio * direcion;
-    viewBox.height += 100 * direcion;
-
-    svg.SetViewBox (viewBox.x, viewBox.y, viewBox.width, viewBox.height);
-}
-
-function UpdateLastMousePosition (x, y)
-{
-    lastMousePosition.x = x;
-    lastMousePosition.y = y;
-}
-
-function GetMouseMovement (x, y)
-{
-    return { x : x - lastMousePosition.x, y : y - lastMousePosition.y };
-}
+        let csv = graph.SaveCSV ();
+        let download = document.getElementById ("file-download");
+        download.setAttribute ("href", encodeURI ("data:text/csv;charset=utf-8," + csv));
+        download.setAttribute ("download", download.value + ".csv");
+        download.click ();
+    });
+});
