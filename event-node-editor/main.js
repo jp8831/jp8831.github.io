@@ -753,7 +753,7 @@ window.addEventListener ("load", function ()
         let csv = graph.SaveCSV ();
         let download = document.getElementById ("file-download");
         download.setAttribute ("href", encodeURI ("data:text/csv;charset=utf-8," + csv));
-        download.setAttribute ("download", download.value + ".csv");
+        download.setAttribute ("download", "result.csv");
         download.click ();
     });
 });
