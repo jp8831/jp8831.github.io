@@ -2,354 +2,596 @@
 *    SVG    *
 ************/
 
-class SVGElementPosition
+class SVGElement
 {
-    constructor (element)
+    constructor (name)
     {
-        this.element = element;
-    }
-
-    Get ()
-    {
-        return {
-            x : Number (this.element.getAttribute ("x")),
-            y : Number (this.element.getAttribute ("y"))
-        };
-    }
-
-    Set (x, y)
-    {
-        this.element.setAttribute ("x", x);
-        this.element.setAttribute ("y", y);
-    }
-}
-
-class SVGElementCirclePosition
-{
-    constructor (element)
-    {
-        this.element = element;
-    }
-
-    Get ()
-    {
-        return {
-            x : Number (this.element.getAttribute ("cx")),
-            y : Number (this.element.getAttribute ("cy"))
-        };
-    }
-
-    Set (x, y)
-    {
-        this.element.setAttribute ("cx", x);
-        this.element.setAttribute ("cy", y);
-    }
-}
-
-class SVGElementStyle
-{
-    constructor (element)
-    {
-        this.element = element;
-    }
-
-    Get ()
-    {
-        let properties = {};
-        for (let property of this.element.getAttribute ("style").split (";"))
+        if (new.target === SVGElement)
         {
-            property = property.split (":");
-            let name = property[0].trim ();
-            let value = property[1].trim ();
-            properties[name] = value;
+            throw Error ("Cannot create an instance of SVGElement.");
         }
-        return properties;
+
+        this.element = name ? document.createElementNS ("http://www.w3.org/2000/svg", name) : null;
     }
 
-    Set (properties)
+    Attribute (name, value)
     {
-        let style = [];
-        for (let name of Object.keys (properties))
+        if (name === undefined)
         {
-            style.push (name + ":" + properties[name]);
+            return;
         }
-        this.element.setAttribute ("style", style.join (";"));
+
+        if (value === undefined)
+        {
+            return this.element.getAttribute (name);
+        }
+
+        this.element.setAttribute (name, value);
+        return this;
+    }
+
+    BoundingRect ()
+    {
+        return this.element.getBoundingClientRect ();
+    }
+
+    Fill (color)
+    {
+        this.element.style.fill = color;
+        return this;
+    }
+
+    FillOpacity (opacity)
+    {
+        this.element.style.fillOpacity = opacity;
+        return this;
+    }
+
+    Stroke (color)
+    {
+        this.element.style.stroke = color;
+        return this;
+    }
+
+    StrokeWidth (width)
+    {
+        this.element.style.strokeWidth = width;
+        return this;
     }
 }
 
-class SVGRectangle
+class SVGChild extends SVGElement
 {
-    constructor ()
+    constructor (name)
     {
-        this.element = document.createElementNS ("http://www.w3.org/2000/svg", "rect");
-        this.position = new SVGElementPosition (this.element);
-        this.style = new SVGElementStyle (this.element);
+        if (new.target === SVGChild)
+        {
+            throw new Error ("Cannot create an instance of SVGChild.");
+        }
+
+        super (name);
+        this.parent = null;
     }
 
-    GetSize ()
+    Position (x, y)
     {
-        return {
-            width : Number (this.element.getAttribute ("width")),
-            height : Number (this.element.getAttribute ("height"))
-        };
+        if (x === undefined)
+        {
+            return {
+                x : Number (this.Attribute ("x")),
+                y : Number (this.Attribute ("y"))
+            };
+        }
+
+        if (y === undefined)
+        {
+            this.Attribute ("x", x);
+            return this;
+        }
+
+        this.Attribute ("x", x);
+        this.Attribute ("y", y);
+        return this;
     }
 
-    SetSize (width, height)
+    Center (x, y)
     {
-        this.element.setAttribute ("width", width);
-        this.element.setAttribute ("height", height);
-    }
+        if (x === undefined)
+        {
+            return {
+                x : Number (this.Attribute ("cx")),
+                y : Number (this.Attribute ("cy"))
+            };
+        }
 
-    GetCornerRadius ()
-    {
-        return {
-            x : Number (this.element.getAttribute ("rx")),
-            y : Number (this.element.getAttribute ("ry"))
-        };
-    }
+        if (y === undefined)
+        {
+            this.Attribute ("cx", x);
+            return this;
+        }
 
-    SetCornerRadius (x, y)
-    {
-        this.element.setAttribute ("rx", x);
-        this.element.setAttribute ("ry", y);
+        this.Attribute ("cx", x);
+        this.Attribute ("cy", y);
+        return this;
     }
 }
 
-class SVGCircle
+class SVGRectangle extends SVGChild
 {
-    constructor ()
+    constructor (width, height)
     {
-        this.element = document.createElementNS ("http://www.w3.org/2000/svg", "circle");
-        this.position = new SVGElementCirclePosition (this.element);
-        this.style = new SVGElementStyle (this.element);
+        super ("rect");
+        this.Size (width, height);
     }
 
-    GetRadius ()
+    Width (width)
     {
-        return Number (this.element.getAttribute ("r"));
+        if (width === undefined)
+        {
+            return Number (this.Attribute ("width"));
+        }
+
+        this.Attribute ("width", width);
+        return this;
     }
 
-    SetRadius (radius)
+    Height (height)
     {
-        this.element.setAttribute ("r", radius);
+        if (height === undefined)
+        {
+            return Number (this.Attribute ("height"));
+        }
+
+        this.Attribute ("height", height);
+        return this;
+    }
+
+    Size (width, height)
+    {
+        if (width === undefined)
+        {
+            return {
+                width : Number (this.Attribute ("width")),
+                height : Number (this.Attribute ("height"))
+            };
+        }
+
+        if (height === undefined)
+        {
+            this.Attribute ("width", width);
+            return this;
+        }
+
+        this.Attribute ("width", width);
+        this.Attribute ("height", height);
+        return this;
+    }
+
+    Radius (x, y)
+    {
+        if (x === undefined)
+        {
+            return {
+                x : Number (this.Attribute ("rx")),
+                y : Number (this.Attribute ("ry"))
+            };
+        }
+
+        if (y === undefined)
+        {
+            this.Attribute ("rx", x);
+            return this;
+        }
+
+        this.Attribute ("rx", x);
+        this.Attribute ("ry", y);
+        return this;
     }
 }
 
-class SVGLine
+class SVGCircle extends SVGChild
 {
-    constructor ()
+    constructor (radius)
     {
-        this.element = document.createElementNS ("http://www.w3.org/2000/svg", "line");
+        super ("circle");
+        this.Radius (radius);
     }
 
-    GetStartPoint ()
+    Radius (radius)
     {
-        return {
-            x : Number (this.element.getAttribute ("x1")),
-            y : Number (this.element.getAttribute ("y1"))
-        };
-    }
+        if (radius === undefined)
+        {
+            return Number (this.Attribute ("r"));
+        }
 
-    SetStartPoint (x, y)
-    {
-        this.element.setAttribute ("x1", x);
-        this.element.setAttribute ("y1", y);
-    }
-
-    GetEndPoint ()
-    {
-        return {
-            x : Number (this.element.getAttribute ("x2")),
-            y : Number (this.element.getAttribute ("y2"))
-        };
-    }
-
-    SetEndPoint (x, y)
-    {
-        this.element.setAttribute ("x2", x);
-        this.element.setAttribute ("y2", y);
+        this.Attribute ("r", radius);
+        return this;
     }
 }
 
-class SVGCurve
+class SVGEllipse extends SVGChild
 {
-    constructor ()
+    constructor (radiusX, radiusY)
     {
-        this.element = document.createElementNS ("http://www.w3.org/2000/svg", "path");
+        super ("circle");
+        this.Radius (radiusX, radiusY);
     }
 
-    GetInfo ()
+    RadiusX (radius)
     {
-        let info = this.element.getAttribute ("d").replace (",", "").split (" ");
-        return {
-            start : {
-                x : Number (info[1]),
-                y : Number (info[2])
-            },
-            end : {
-                x : Number (info[8]),
-                y : Number (info[9])
-            },
-            control1 : {
-                x : Number (info[4]),
-                y : Number (info[5])
-            },
-            control2 : {
-                x : Number (info[6]),
-                y : Number (info[7])
-            }
-        };
+        if (radius === undefined)
+        {
+            return Number (this.Attribute ("rx"));
+        }
+
+        this.Attribute ("rx", radius);
+        return this;
     }
 
-    Set (startPointX, startPointY, endPointX, endPointY,
-        controlPoint1X, controlPoint1Y, controlPoint2X, controlPoint2Y)
+    RadiusY (radius)
     {
-        let curve = [
-            [controlPoint1X, controlPoint1Y].join (" "),
-            [controlPoint2X, controlPoint2Y].join (" "),
-            [endPointX, endPointY].join (" "),
-        ].join (", ");
+        if (radius === undefined)
+        {
+            return Number (this.Attribute ("ry"));
+        }
 
-        this.element.setAttribute ("d", ["M", startPointX, startPointY, "C", curve].join (" "));
+        this.Attribute ("ry", radius);
+        return this;
+    }
+
+    Radius (radiusX, radiusY)
+    {
+        if (radiusX === undefined)
+        {
+            return {
+                x : Number (this.Attribute ("rx")),
+                y : Number (this.Attribute ("ry"))
+            };
+        }
+
+        if (radiusY === undefined)
+        {
+            this.Attribute ("rx", radiusX);
+            return this;
+        }
+
+        this.Attribute ("rx", radiusX);
+        this.Attribute ("ry", radiusY);
+        return this;
     }
 }
 
-class SVGText
+class SVGLine extends SVGChild
 {
-    constructor ()
+    constructor (startX, startY, endX, endY)
     {
-        this.element = document.createElementNS ("http://www.w3.org/2000/svg", "text");
-        this.position = new SVGElementPosition (this.element);
+        super ("line");
+        this.Start (startX, startY).End (endX, endY);
     }
 
-    Get ()
+    Start (x, y)
     {
-        return this.element.innerHTML;
+        if (x === undefined)
+        {
+            return {
+                x : Number (this.Attribute ("x1")),
+                y : Number (this.Attribute ("y1"))
+            };
+        }
+
+        if (y === undefined)
+        {
+            this.Attribute ("x1", x);
+            return this;
+        }
+
+        this.Attribute ("x1", x);
+        this.Attribute ("y1", y);
+        return this;
     }
 
-    Set (content)
+    End (x, y)
     {
-        this.element.innerHTML = content;
-    }
+        if (x === undefined)
+        {
+            return {
+                x : Number (this.Attribute ("x2")),
+                y : Number (this.Attribute ("y2"))
+            };
+        }
 
-    GetWidth ()
-    {
-        return Number (this.element.getBoundingClientRect ().width);
+        if (y === undefined)
+        {
+            this.Attribute ("x2", x);
+            return this;
+        }
+
+        this.Attribute ("x2", x);
+        this.Attribute ("y2", y);
+        return this;
     }
 }
 
-class SVGGroup
+class SVGPath extends SVGChild
 {
-    constructor ()
+    constructor (data)
     {
-        this.element = document.createElementNS ("http://www.w3.org/2000/svg", "g");
-        this.SetTransform ({
-            translate : {
-                x : 0,
-                y : 0
-            },
-            rotate : 0,
-            scale : {
-                x : 1,
-                y : 1
-            }
-        });
+        super ("path");
+        this.Attribute ("d", data);
+    }
+
+    Data ()
+    {
+        let data = this.Attribute ("d");
+        return data ? data : "";
+    }
+
+    MoveTo (x, y)
+    {
+        this.Attribute ("d", this.Data () + ` M ${x} ${y}`);
+        return this;
+    }
+
+    LineTo (x, y)
+    {
+        this.Attribute ("d", this.Data () + ` L ${x} ${y}`);
+        return this;
+    }
+
+    HorizontalLineTo (x)
+    {
+        this.Attribute ("d", this.Data () + ` H ${x}`);
+        return this;
+    }
+
+    VerticalLineTo (y)
+    {
+        this.Attribute ("d", this.Data () + ` V ${y}`);
+        return this;
+    }
+
+    CurveTo (x, y, control1X, control1Y, control2X, control2Y)
+    {
+        this.Attribute ("d", this.Data () + ` C ${control1X} ${control1Y}, ${control2X} ${control2Y}, ${x} ${y}`);
+        return this;
+    }
+
+    SmoothCurveTo (x, y, controlX, controlY)
+    {
+        this.Attribute ("d", this.Data () + ` S ${controlX} ${controlY}, ${x} ${y}`);
+        return this;
+    }
+
+    QuadraticCurveTo (x, y, controlX, controlY)
+    {
+        this.Attribute ("d", this.Data () + ` Q ${controlX} ${controlY}, ${x} ${y}`);
+        return this;
+    }
+
+    SmoothQuadraticCurveTo (x, y)
+    {
+        this.Attribute ("d", this.Data () + ` T ${x} ${y}`);
+        return this;
+    }
+
+    ArcTo (x, y, radiusX, radiusY, xAxisRotation = 0, isLargeArc = false, isClockwise = true)
+    {
+        this.Attribute ("d", this.Data () + ` A ${radiusX} ${radiusY}, ${xAxisRotation}, ${isLargeArc ? 1 : 0}, ${isClockwise ? 1 : 0}, ${x} ${y}`);
+        return this;
+    }
+
+    Close ()
+    {
+        this.Attribute ("d", this.Data () + " Z");
+    }
+}
+
+class SVGText extends SVGChild
+{
+    constructor (string)
+    {
+        super ("text");
+        this.element.innerHTML = string;
+    }
+
+    String (string)
+    {
+        if (string === undefined)
+        {
+            return this.element.innerHTML;
+        }
+
+        this.element.innerHTML = string;
+    }
+}
+
+class SVGParent extends SVGElement
+{
+    constructor (name)
+    {
+        if (new.target === SVGParent)
+        {
+            throw new Error ("Cannot create an instance of SVGParent.");
+        }
+
+        super (name);
+        this.children = [];
     }
 
     Add (child)
     {
-        this.element.appendChild (child.element);
-    }
-
-    Delete (child)
-    {
-        if (child.parentElement !== this.element)
+        if (this.children.includes (child))
         {
             return;
         }
-        this.element.parentElement.appendChild (child.element);
+
+        if (child.parent)
+        {
+            child.parent.Remove (child);
+        }
+
+        this.element.appendChild (child.element);
+        this.children.push (child);
+
+        child.parent = this;
     }
 
-    GetTransform ()
+    Remove (child)
     {
-        let transform = this.element.getAttribute ("transform");
-        let translate = transform.match (/translate\((-?[0-9]*\.?[0-9]*),(-?[0-9]*\.?[0-9]*)\)/);
-        let rotate = transform.match (/rotate\(([0-9]*\.?[0-9]*)\)/);
-        let scale = transform.match (/scale\(([0-9]*\.?[0-9]*),([0-9]*\.?[0-9]*)\)/);
-        return {
-            translate : {
-                x : Number (translate[1]),
-                y : Number (translate[2])
-            },
-            rotate : Number (rotate[1]),
-            scale : {
-                x : Number (scale[1]),
-                y : Number (scale[2])
+        let index = this.children.indexOf (child);
+
+        if (index === -1)
+        {
+            return null;
+        }
+
+        this.element.removeChild (child.element);
+        this.children.splice (index, 1);
+
+        child.parent = null;
+
+        return child;
+    }
+
+    FindByElement (element)
+    {
+        for (let child of this.children)
+        {
+            if (child.element === element)
+            {
+                return child;
             }
-        };
+        }
+
+        return null; 
     }
 
-    SetTransform (transform)
+    Rectangle (width, height)
     {
-        this.element.setAttribute ("transform", [
-            `translate(${transform.translate.x},${transform.translate.y})`,
-            `rotate(${transform.rotate})`,
-            `scale(${transform.scale.x},${transform.scale.y})`
-        ].join (" "));
-    } 
+        let rectangle = new SVGRectangle (width, height);
+        this.Add (rectangle);
+        return rectangle;
+    }
+
+    Circle (radius)
+    {
+        let circle = new SVGCircle (radius);
+        this.Add (circle);
+        return circle;
+    }
+
+    Ellipse (radiusX, radiusY)
+    {
+        let ellipse = new SVGEllipse (radiusX, radiusY);
+        this.Add (ellipse);
+        return ellipse;
+    }
+
+    Line (startX, startY, endX, endY)
+    {
+        let line = new SVGLine (startX, startY, endX, endY);
+        this.Add (line);
+        return line;
+    }
+
+    Path (data)
+    {
+        let path = new SVGPath (data);
+        this.Add (path);
+        return path;
+    }
+
+    Text (string)
+    {
+        let text = new SVGText (string);
+        this.Add (text);
+        return text;
+    }
 }
 
-class SVG
+class SVGGroup extends SVGParent
+{
+    constructor ()
+    {
+        super ("g");
+        this.Attribute ("transform", "scale(1,1) rotate(0) translate(0,0)");
+    }
+
+    Translate (x, y)
+    {
+        var regEx = /translate\(.*?\)/;
+        if (x === undefined)
+        {
+            let translate = this.Attribute ("transform").match (regEx)[0];
+            translate = translate.substring (translate.indexOf ("(") + 1, translate.indexOf (")")).split (",");
+            return {
+                x : Number (translate[0]),
+                y : Number (translate[1])
+            };
+        }
+        else if (y === undefined)
+        {
+            this.Attribute ("transform", this.Attribute ("transform").replace (regEx, `translate(${x},${this.Scale ().y})`));
+            return this;
+        }
+        this.Attribute ("transform", this.Attribute ("transform").replace (regEx, `translate(${x},${y})`));
+        return this;
+    }
+
+    Rotate (angle)
+    {
+        var regEx = /rotate\(.*?\)/;
+        if (angle === undefined)
+        {
+            let rotate = this.Attribute ("transform").match (regEx)[0];
+            return Number (rotate.substring (rotate.indexOf ("(") + 1, rotate.indexOf (")")));
+        }
+        this.Attribute ("transform", this.Attribute ("transform").replace (regEx, `rotate(${angle})`));
+        return this;
+    }
+
+    Scale (x, y)
+    {
+        var regEx = /scale\(.*?\)/;
+        if (x === undefined)
+        {
+            let scale = this.Attribute ("transform").match (regEx)[0];
+            scale = scale.substring (scale.indexOf ("(") + 1, scale.indexOf (")")).split (",");
+            return {
+                x : Number (scale[0]),
+                y : Number (scale[1])
+            };
+        }
+        else if (y === undefined)
+        {
+            this.Attribute ("transform", this.Attribute ("transform").replace (regEx, `scale(${x},${this.Scale ().y})`));
+            return this;
+        }
+        this.Attribute ("transform", this.Attribute ("transform").replace (regEx, `scale(${x},${y})`));
+        return this;
+    }
+}
+
+SVGParent.prototype.Group = function ()
+{
+    let group = new SVGGroup ();
+    this.Add (group);
+    return group;
+};
+
+class SVG extends SVGParent
 {
     constructor (id)
     {
-        this.id = id;
+        super ();
         this.element = document.getElementById (id);
+
         this.backgroundElement = this.element.getElementsByClassName ("background")[0];
-
-        this.children = [];
-        this.layers = {};
-
-        this.AddLayer ("default");
-    }
-
-    AddChild (child, layerName = "default")
-    {
-        this.children.push (child);
-        this.layers[layerName].Add (child);
-    }
-
-    FindChild (element)
-    {
-        let found = this.children.find (shape => shape.element === element);
-        return found ? found : null;
-    }
-
-    AddLayer (name)
-    {
-        if (Object.keys (this.layers).includes (name))
-        {
-            return;
-        }
-
-        this.layers[name] = new SVGGroup ();
-        this.element.appendChild (this.layers[name].element);
-    }
-
-    DeleteLayer (name)
-    {
-        if (Object.keys (this.layers).includes (name) === false)
-        {
-            return;
-        }
-
-        this.layers[name].element.remove ();
-        delete this.layers[name];
     }
 
     GetViewBox ()
     {
-        let viewBox = this.element.getAttribute ("viewBox").split (" ").map (value => Number (value));
+        let viewBox = this.Attribute ("viewBox").split (" ").map (value => Number (value));
         return {
             x : viewBox[0],
             y : viewBox[1],
@@ -360,7 +602,7 @@ class SVG
 
     SetViewBox (x, y, width, height)
     {
-        this.element.setAttribute ("viewBox", [x, y, width, height].join (" "));
+        this.Attribute ("viewBox", [x, y, width, height].join (" "));
         this.backgroundElement.setAttribute ("x", x);
         this.backgroundElement.setAttribute ("y", y);
     }
@@ -446,10 +688,10 @@ class EventGraph
 
 class NodeLinkPoint
 {
-    constructor (node, svg)
+    constructor (node)
     {
         this.node = node;
-        this.svg = svg;
+        this.svg = null;
     }
 }
 
@@ -460,8 +702,8 @@ class Node
         this.id = id;
         this.svg = svg;
 
-        this.prevLinkPoint = new NodeLinkPoint (this, this.svg);
-        this.nextLinkPoint = new NodeLinkPoint (this, this.svg);
+        this.prevLinkPoint = new NodeLinkPoint (this);
+        this.nextLinkPoint = new NodeLinkPoint (this);
     }
 }
 
@@ -478,9 +720,10 @@ class NodeEditor
         this.dragTarget = null;
 
         this.svg = svg;
+        this.svgLinkLayer = svg.Group ();
+        this.svgNodeLayer = svg.Group ();
 
         this.svg.SetViewBox (0, 0, window.innerWidth, window.innerHeight);
-        this.svg.AddLayer ("nodes");
 
         this.svg.element.onmousedown = (event) => { event.preventDefault (); this.StartDrag (event.target, event.clientX, event.clientY); };
         this.svg.element.onmousemove = (event) => { event.preventDefault (); this.Drag (event.clientX, event.clientY); };
@@ -491,59 +734,29 @@ class NodeEditor
 
     CreateNode (id, subject, action, object)
     {
-        let node = new Node (id, new SVGGroup ());
-        this.svg.AddChild (node.svg, "nodes");
+        let node = new Node (id, this.svgNodeLayer.Group ());
         node.svg.element.classList.add ("node");
+
+        this.nodes.push (node);
         
-        let nodeRect = new SVGRectangle ();
-        node.svg.Add (nodeRect);
-        nodeRect.SetCornerRadius (5, 5);
+        let nodeRect = node.svg.Rectangle (100, 110).Radius (5, 5);
+        let subjectTextWidth = node.svg.Text (subject).Position (20, 50).BoundingRect ().width;
+        let actionTextWidth = node.svg.Text (action).Position (20, 70).BoundingRect ().width;
+        let objectTextWidth = node.svg.Text (object).Position (20, 90).BoundingRect ().width;
     
-        let subjectText = new SVGText ();
-        subjectText.Set (subject);
-        subjectText.position.Set (20, 50);
+        nodeRect.Width (Math.max (100, subjectTextWidth, actionTextWidth, objectTextWidth) + 40);
     
-        let actiontText = new SVGText ();
-        actiontText.Set (action);
-        actiontText.position.Set (20, 70);
-    
-        let objectText = new SVGText ();
-        objectText.Set (object);
-        objectText.position.Set (20, 90);
-    
-        node.svg.Add (subjectText);
-        node.svg.Add (actiontText);
-        node.svg.Add (objectText);
-    
-        nodeRect.SetSize (Math.max (100, subjectText.GetWidth (), actiontText.GetWidth (), objectText.GetWidth ()) + 40, 110);
-    
-        let previousPoint = new SVGCircle ();
+        let previousPoint = node.svg.Circle (5).Center (0, 20);
         previousPoint.element.classList.add ("link-point", "previous");
-        previousPoint.SetRadius (5);
-        previousPoint.position.Set (0, 20);
     
-        let nextPoint = new SVGCircle ();
+        let nextPoint = node.svg.Circle (5).Center (nodeRect.Width (), 20);
         nextPoint.element.classList.add ("link-point", "next");
-        nextPoint.SetRadius (5);
-        nextPoint.position.Set (nodeRect.GetSize ().width, 20);
 
         node.prevLinkPoint.svg = previousPoint;
         node.nextLinkPoint.svg = nextPoint;
         
-        let previousText = new SVGText ();
-        previousText.Set ("Previous");
-        previousText.position.Set (10, 25);
-    
-        let nextText = new SVGText ();
-        nextText.Set ("Next");
-        nextText.position.Set (nodeRect.GetSize ().width - 45, 25);
-    
-        node.svg.Add (previousPoint);
-        node.svg.Add (nextPoint);
-        node.svg.Add (previousText);
-        node.svg.Add (nextText);
-
-        this.nodes.push (node);
+        node.svg.Text ("Previous").Position (10, 25);
+        node.svg.Text ("Next").Position (nodeRect.Width () - 45, 25);
 
         return node;
     }
@@ -553,30 +766,31 @@ class NodeEditor
 
     }
 
-    ConnectNode (from, destination)
+    ConnectNode (startNode, endNode)
     {
-        let link = { svg : new SVGCurve (), previous : from, next : destination };
-        this.svg.AddChild (link.svg);
-        this.links.push (link);
+        let link = { svg : this.svgLinkLayer.Path (), start : startNode, end : endNode };
         link.svg.element.classList.add ("link");
 
-        let fromTranslate = from.svg.GetTransform ().translate;
-        let fromLinkPoint = from.nextLinkPoint.svg.position.Get ();
+        this.links.push (link);
 
-        let startX = fromTranslate.x + fromLinkPoint.x;
-        let startY = fromTranslate.y + fromLinkPoint.y;
+        let startNodeTranslate = startNode.svg.Translate ();
+        let startLinkPoint = startNode.nextLinkPoint.svg.Center ();
 
-        let destTranslate = destination.svg.GetTransform ().translate;
-        let destLinkPoint = destination.prevLinkPoint.svg.position.Get ();
+        let startX = startNodeTranslate.x + startLinkPoint.x;
+        let startY = startNodeTranslate.y + startLinkPoint.y;
 
-        let endX = destTranslate.x + destLinkPoint.x;
-        let endY = destTranslate.y + destLinkPoint.y;
+        let endNodeTranslate = endNode.svg.Translate ();
+        let endLinkPoint = endNode.prevLinkPoint.svg.Center ();
 
-        link.svg.Set (startX, startY, endX, endY, startX, endY, endX, startY);
-        this.graph.AddEdge ({ prev : from.id, next : destination.id});
+        let endX = endNodeTranslate.x + endLinkPoint.x;
+        let endY = endNodeTranslate.y + endLinkPoint.y;
+
+        link.svg.MoveTo (startX, startY).CurveTo (endX, endY, startX, endY, endX, startY);
+
+        this.graph.AddEdge ({ prev : startNode.id, next : endNode.id});
     }
 
-    FindNodeFromElement (element)
+    FindNodeByElement (element)
     {
         for (let node of this.nodes)
         {
@@ -600,12 +814,12 @@ class NodeEditor
         }
         else if (target.classList.contains ("link-point") && target.classList.contains ("next"))
         {
-            let node = this.FindNodeFromElement (target.parentElement);
+            let node = this.FindNodeByElement (target.parentElement);
             this.dragTarget = node.prevLinkPoint;
         }
         else if (target.parentElement.classList.contains ("node"))
         {
-            this.dragTarget = this.FindNodeFromElement (target.parentElement);
+            this.dragTarget = this.FindNodeByElement (target.parentElement);
         }
     }
 
@@ -621,7 +835,7 @@ class NodeEditor
     
         if (target.classList.contains ("link-point") && target.classList.contains ("previous"))
         {
-            let destinationNode = this.FindNodeFromElement (target.parentElement);
+            let destinationNode = this.FindNodeByElement (target.parentElement);
             this.ConnectNode (this.dragTarget.node, destinationNode);
         }
 
@@ -651,43 +865,28 @@ class NodeEditor
         else if (this.dragTarget.constructor === Node)
         {
             let moveNode = this.dragTarget;
-            let transform = moveNode.svg.GetTransform ();
-            transform.translate.x += mouseMoveX;
-            transform.translate.y += mouseMoveY;
+            let translate = moveNode.svg.Translate ();
 
-            moveNode.svg.SetTransform (transform);
+            moveNode.svg.Translate (translate.x + mouseMoveX, translate.y + mouseMoveY);
 
             for (let link of this.links)
             {
-                if (moveNode === link.previous)
+                if (moveNode === link.start || moveNode === link.end)
                 {
-                    let fromTranslate = moveNode.svg.GetTransform ().translate;
-                    let fromLinkPoint = moveNode.nextLinkPoint.svg.position.Get ();
-
-                    let startX = fromTranslate.x + fromLinkPoint.x;
-                    let startY = fromTranslate.y + fromLinkPoint.y;
-
-                    let curve = link.svg.GetInfo ();
-
-                    let endX = curve.end.x;
-                    let endY = curve.end.y;
-
-                    link.svg.Set (startX, startY, endX, endY, startX, endY, endX, startY);
-                }
-                else if (moveNode === link.next)
-                {
-                    let toTranslate = moveNode.svg.GetTransform ().translate;
-                    let toLinkPoint = moveNode.prevLinkPoint.svg.position.Get ();
-
-                    let endX = toTranslate.x + toLinkPoint.x;
-                    let endY = toTranslate.y + toLinkPoint.y;
-
-                    let curve = link.svg.GetInfo ();
-
-                    let startX = curve.start.x;
-                    let startY = curve.start.y;
-
-                    link.svg.Set (startX, startY, endX, endY, startX, endY, endX, startY);
+                    let startNodeTranslate = link.start.svg.Translate ();
+                    let startLinkPoint = link.start.nextLinkPoint.svg.Center ();
+            
+                    let startX = startNodeTranslate.x + startLinkPoint.x;
+                    let startY = startNodeTranslate.y + startLinkPoint.y;
+            
+                    let endNodeTranslate = link.end.svg.Translate ();
+                    let endLinkPoint = link.end.prevLinkPoint.svg.Center ();
+            
+                    let endX = endNodeTranslate.x + endLinkPoint.x;
+                    let endY = endNodeTranslate.y + endLinkPoint.y;
+            
+                    link.svg.Attribute ("d", "");
+                    link.svg.MoveTo (startX, startY).CurveTo (endX, endY, startX, endY, endX, startY);
                 }
             }
         }
@@ -732,9 +931,9 @@ window.addEventListener ("load", function ()
 
                 if (lastNode)
                 {
-                    let transform = node.svg.GetTransform ();
-                    transform.translate.x = lastNode.svg.element.getBoundingClientRect ().right + 20;
-                    node.svg.SetTransform (transform);
+                    let translate = node.svg.Translate ();
+                    translate.x = lastNode.svg.BoundingRect ().right + 20;
+                    node.svg.Translate (lastNode.svg.BoundingRect ().right + 20);
                 }
 
                 lastNode = node;
