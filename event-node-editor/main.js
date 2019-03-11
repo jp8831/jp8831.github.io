@@ -26,6 +26,12 @@ class SVGElement
             return this.element.getAttribute (name);
         }
 
+        if (value === null)
+        {
+            this.element.removeAttribute (name);
+            return this;
+        }
+
         this.element.setAttribute (name, value);
         return this;
     }
@@ -661,21 +667,25 @@ class EventGraph
         {
             csv += "\n";
 
-            let prevIds = [];
-            let nextIds = [];
+            let previousEventIds = [];
+            let nextEventIds = [];
+
             for (let edge of this.edges)
             {
-                if (edge.next === vertex.id && prevIds.includes (edge.prev) === false)
+                if (edge.next === vertex.id && previousEventIds.includes (edge.prev) === false)
                 {
-                    prevIds.push (edge.prev);
+                    previousEventIds.push (edge.prev);
                 }
-                else if (edge.prev === vertex.id && nextIds.includes (edge.next) === false)
+                else if (edge.prev === vertex.id && nextEventIds.includes (edge.next) === false)
                 {
-                    nextIds.push (edge.next);
+                    nextEventIds.push (edge.next);
                 }
             }
 
-            csv += [vertex.id, vertex.subject, vertex.action, vertex.object, prevIds.join (" "), nextIds.join (" ")].join (",");
+            previousEventIds = previousEventIds.length > 0 ? previousEventIds.join (" ") : "null";
+            nextEventIds = nextEventIds.length > 0 ? nextEventIds.join (" ") : "null";
+
+            csv += [vertex.id, vertex.subject, vertex.action, vertex.object, previousEventIds, nextEventIds].join (",");
         }
 
         return csv;
@@ -686,7 +696,7 @@ class EventGraph
 *    Node Editor    *
 ********************/
 
-class NodeLinkPoint
+class NodePin
 {
     constructor (node)
     {
@@ -702,8 +712,19 @@ class Node
         this.id = id;
         this.svg = svg;
 
-        this.prevLinkPoint = new NodeLinkPoint (this);
-        this.nextLinkPoint = new NodeLinkPoint (this);
+        this.prevPin = new NodePin (this);
+        this.nextPin = new NodePin (this);
+    }
+}
+
+class NodeLink
+{
+    constructor (svg)
+    {
+        this.svg = svg;
+
+        this.startNode = null;
+        this.endNode = null;
     }
 }
 
@@ -745,15 +766,12 @@ class NodeEditor
         let objectTextWidth = node.svg.Text (object).Position (20, 90).BoundingRect ().width;
     
         nodeRect.Width (Math.max (100, subjectTextWidth, actionTextWidth, objectTextWidth) + 40);
-    
-        let previousPoint = node.svg.Circle (5).Center (0, 20);
-        previousPoint.element.classList.add ("link-point", "previous");
-    
-        let nextPoint = node.svg.Circle (5).Center (nodeRect.Width (), 20);
-        nextPoint.element.classList.add ("link-point", "next");
 
-        node.prevLinkPoint.svg = previousPoint;
-        node.nextLinkPoint.svg = nextPoint;
+        node.prevPin.svg = node.svg.Circle (5).Center (0, 20);
+        node.prevPin.svg.element.classList.add ("link-point", "previous");
+
+        node.nextPin.svg = node.svg.Circle (5).Center (nodeRect.Width (), 20);
+        node.nextPin.svg.element.classList.add ("link-point", "next");
         
         node.svg.Text ("Previous").Position (10, 25);
         node.svg.Text ("Next").Position (nodeRect.Width () - 45, 25);
@@ -764,30 +782,6 @@ class NodeEditor
     DeleteNode ()
     {
 
-    }
-
-    ConnectNode (startNode, endNode)
-    {
-        let link = { svg : this.svgLinkLayer.Path (), start : startNode, end : endNode };
-        link.svg.element.classList.add ("link");
-
-        this.links.push (link);
-
-        let startNodeTranslate = startNode.svg.Translate ();
-        let startLinkPoint = startNode.nextLinkPoint.svg.Center ();
-
-        let startX = startNodeTranslate.x + startLinkPoint.x;
-        let startY = startNodeTranslate.y + startLinkPoint.y;
-
-        let endNodeTranslate = endNode.svg.Translate ();
-        let endLinkPoint = endNode.prevLinkPoint.svg.Center ();
-
-        let endX = endNodeTranslate.x + endLinkPoint.x;
-        let endY = endNodeTranslate.y + endLinkPoint.y;
-
-        link.svg.MoveTo (startX, startY).CurveTo (endX, endY, startX, endY, endX, startY);
-
-        this.graph.AddEdge ({ prev : startNode.id, next : endNode.id});
     }
 
     FindNodeByElement (element)
@@ -814,8 +808,11 @@ class NodeEditor
         }
         else if (target.classList.contains ("link-point") && target.classList.contains ("next"))
         {
-            let node = this.FindNodeByElement (target.parentElement);
-            this.dragTarget = node.prevLinkPoint;
+            let link = new NodeLink (this.svgLinkLayer.Path ());
+            link.svg.element.classList.add ("link");
+            link.startNode = this.FindNodeByElement (target.parentElement);
+            
+            this.dragTarget = link;
         }
         else if (target.parentElement.classList.contains ("node"))
         {
@@ -835,8 +832,33 @@ class NodeEditor
     
         if (target.classList.contains ("link-point") && target.classList.contains ("previous"))
         {
-            let destinationNode = this.FindNodeByElement (target.parentElement);
-            this.ConnectNode (this.dragTarget.node, destinationNode);
+            let startNode = this.dragTarget.startNode;
+
+            let startNodePos = startNode.svg.Translate ();
+            let startPinPos = startNode.nextPin.svg.Center ();
+
+            let startX = startNodePos.x + startPinPos.x;
+            let startY = startNodePos.y + startPinPos.y;
+
+            let endNode = this.FindNodeByElement (target.parentElement);
+
+            let endNodePos = endNode.svg.Translate ();
+            let endPinPos = endNode.prevPin.svg.Center ();
+
+            let endX = endNodePos.x + endPinPos.x;
+            let endY = endNodePos.y + endPinPos.y;
+
+            this.dragTarget.endNode = endNode;
+            this.dragTarget.svg.Attribute ("d", null);
+            this.dragTarget.svg.MoveTo (startX, startY).CurveTo (endX, endY, startX, endY, endX, startY);
+
+            this.links.push (this.dragTarget);
+            this.graph.AddEdge ({ prev : startNode.id, next : endNode.id});
+        }
+        else if (this.dragTarget.constructor === NodeLink)
+        {
+            this.svgLinkLayer.Remove (this.dragTarget.svg);
+            delete this.dragTarget;
         }
 
         this.dragTarget = null;
@@ -871,24 +893,42 @@ class NodeEditor
 
             for (let link of this.links)
             {
-                if (moveNode === link.start || moveNode === link.end)
+                if (moveNode === link.startNode || moveNode === link.endNode)
                 {
-                    let startNodeTranslate = link.start.svg.Translate ();
-                    let startLinkPoint = link.start.nextLinkPoint.svg.Center ();
+                    let startNodePosition = link.startNode.svg.Translate ();
+                    let startPinPosition = link.startNode.nextPin.svg.Center ();
             
-                    let startX = startNodeTranslate.x + startLinkPoint.x;
-                    let startY = startNodeTranslate.y + startLinkPoint.y;
+                    let startX = startNodePosition.x + startPinPosition.x;
+                    let startY = startNodePosition.y + startPinPosition.y;
             
-                    let endNodeTranslate = link.end.svg.Translate ();
-                    let endLinkPoint = link.end.prevLinkPoint.svg.Center ();
+                    let endNodePosition = link.endNode.svg.Translate ();
+                    let endPinPosition = link.endNode.prevPin.svg.Center ();
             
-                    let endX = endNodeTranslate.x + endLinkPoint.x;
-                    let endY = endNodeTranslate.y + endLinkPoint.y;
+                    let endX = endNodePosition.x + endPinPosition.x;
+                    let endY = endNodePosition.y + endPinPosition.y;
             
-                    link.svg.Attribute ("d", "");
+                    link.svg.Attribute ("d", null);
                     link.svg.MoveTo (startX, startY).CurveTo (endX, endY, startX, endY, endX, startY);
                 }
             }
+        }
+        else if (this.dragTarget.constructor === NodeLink)
+        {
+            let startNode = this.dragTarget.startNode;
+
+            let startNodePos = startNode.svg.Translate ();
+            let startPinPos = startNode.nextPin.svg.Center ();
+
+            let startX = startNodePos.x + startPinPos.x;
+            let startY = startNodePos.y + startPinPos.y;
+
+            let viewBox = this.svg.GetViewBox ();
+            
+            let endX = this.lastMousePosition.x * viewBox.width / window.innerWidth + viewBox.x;
+            let endY = this.lastMousePosition.y * viewBox.height / window.innerHeight + viewBox.y;
+
+            this.dragTarget.svg.Attribute ("d", null);
+            this.dragTarget.svg.MoveTo (startX, startY).CurveTo (endX, endY, startX, endY, endX, startY);
         }
     }
 
@@ -901,6 +941,9 @@ class NodeEditor
     
         viewBox.width += 100 * aspectRatio * direcion;
         viewBox.height += 100 * direcion;
+
+        viewBox.width = Math.max (viewBox.width, aspectRatio);
+        viewBox.height = Math.max (viewBox.height, 1);
     
         this.svg.SetViewBox (viewBox.x, viewBox.y, viewBox.width, viewBox.height);
     }
