@@ -6,7 +6,7 @@ async function RunDemo ()
 
     engine.Init ();
 
-    engine.resource.SetUriBase ("https://jp8831.github.io/webgl-tutorials/demo-assets");
+    engine.resource.SetUriBase ("demo-assets");
     await engine.resource.Fetch ("monkey.obj", "meshes", Resource.EResourceType.MeshData);
     await engine.resource.Fetch ("vertex.glsl", "shaders", Resource.EResourceType.ShaderSource);
     await engine.resource.Fetch ("fragment.glsl", "shaders", Resource.EResourceType.ShaderSource);
